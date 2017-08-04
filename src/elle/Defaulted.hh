@@ -9,7 +9,7 @@ namespace elle
   ///
   /// The value returned is read-only, to keep consistency.
   ///
-  /// \code{.cc}
+  /// @code{.cc}
   ///
   /// auto d = Defaulted<bool>(true);
   /// assert(!d); // d was not set.
@@ -18,7 +18,7 @@ namespace elle
   /// assert(d); // d was set.
   /// assert(!d.get()); // d's value is now false.
   ///
-  /// \endcode
+  /// @endcode
   template <typename T>
   class Defaulted
   {
