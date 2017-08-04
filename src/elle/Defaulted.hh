@@ -23,7 +23,9 @@ namespace elle
   class Defaulted
   {
   public:
-    Defaulted(T def, bool set = true)
+    using Value = T;
+
+    Defaulted(Value def, bool set = true)
       : _value{std::move(def)}
       , _set{set}
     {}
@@ -52,21 +54,21 @@ namespace elle
     }
 
     /// The value, readonly.
-    T const&
+    Value const&
     get() const
     {
       return this->_value;
     }
 
     /// The value, readonly.
-    T const&
+    Value const&
     operator*() const
     {
       return this->get();
     }
 
     /// A pointer to the value, readonly.
-    T const*
+    Value const*
     operator->() const
     {
       return &this->_value;
@@ -74,7 +76,7 @@ namespace elle
 
   private:
     /// The value.
-    ELLE_ATTRIBUTE(T, value);
+    ELLE_ATTRIBUTE(Value, value);
     /// Whether a value was specified (as opposed to remaining equal
     /// to the initial value).
     bool _set = false;

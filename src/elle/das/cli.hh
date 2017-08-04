@@ -349,7 +349,7 @@ namespace elle
             }
             catch (std::invalid_argument)
             {
-              throw OptionValueError(this->_option, v, "invalid boolean");
+              throw OptionValueError(this->_option, v, "invalid Boolean");
             }
           }
 
@@ -482,7 +482,7 @@ namespace elle
 
           operator bool() const
           {
-            ELLE_TRACE_SCOPE("convert %s to boolean", this->_option);
+            ELLE_TRACE_SCOPE("convert %s to Boolean", this->_option);
             auto const res = this->_flag || this->convert<bool>();
             this->_check_remaining();
             return res;
@@ -518,7 +518,8 @@ namespace elle
           }
 
           /// A conversion that allows to know whether we have the
-          /// option's default value, or a user defined one.
+          /// option's default value, or a user defined one, even if
+          /// the user's value is the same as the default value.
           template <typename I>
           operator elle::Defaulted<I>() const
           {
