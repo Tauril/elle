@@ -432,10 +432,10 @@ namespace elle
           missing_impl(std::false_type has_def, std::false_type is_defaulted) const
           {
             return meta::static_if<std::is_same<T, bool>{}>
-              ([](auto& self) {
+              ([](auto const & self) {
                 return false;
               },
-               [](auto& self) -> T {
+               [](auto const& self) -> T {
                  ELLE_TRACE("raise missing error");
                  throw MissingOption(self._option);
                })
