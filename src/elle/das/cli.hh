@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <regex>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
@@ -347,9 +348,9 @@ namespace elle
             {
               return elle::from_string<bool>(v);
             }
-            catch (std::invalid_argument)
+            catch (std::invalid_argument const& e)
             {
-              throw OptionValueError(this->_option, v, "invalid Boolean");
+              throw OptionValueError(this->_option, v, e.what());
             }
           }
 
@@ -360,13 +361,28 @@ namespace elle
             return v;
           }
 
+          // FIXME: move this into elle::from_string.
+          template <typename I>
+          std::enable_if_t<std::is_same<I, std::regex>::value, I>
+          convert(std::string const& v, int) const
+          {
+            try
+            {
+              return std::regex{v};
+            }
+            catch (std::regex_error const& e)
+            {
+              throw OptionValueError(this->_option, v, e.what());
+            }
+          }
+
           template <typename I>
           std::enable_if_t<std::is_base_of<boost::optional_detail::optional_tag, I>::value, I>
           convert(std::string const& v, int) const
           {
             if (this->_values.empty())
               return boost::none;
-            else if (this->_values.size() > 1)
+            else if (1 < this->_values.size())
               throw DuplicateOption(this->_option);
             else
               return convert<typename I::value_type>(this->_values[0], 0);
@@ -391,6 +407,8 @@ namespace elle
             }
           }
 
+          /// Last resort: see if our Json deserialization understands this.
+          // FIXME: move this into elle::from_string.
           template <typename I>
           I
           convert(std::string const& v, ...) const

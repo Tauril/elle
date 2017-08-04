@@ -316,6 +316,36 @@ defaulted()
     CHECK((f, {"--foo", "default"s}), true,  "default"s);
   }
 #undef CHECK
+  // regex.
+  {
+    auto const f = function(
+      [] (elle::Defaulted<std::regex> b) { return std::make_pair(bool(b), *b); },
+      foo = elle::defaulted(std::regex{"default"}));
+    {
+      auto set_re = call(f, {});
+      auto const& re = set_re.second;
+      // There is no equality on regex.
+      BOOST_TEST(set_re.first == false);
+      BOOST_CHECK(std::regex_match("default", re));
+      BOOST_CHECK(!std::regex_match("foo", re));
+    }
+    {
+      auto set_re = call(f, {"--foo", "foo"});
+      auto const& re = set_re.second;
+      // There is no equality on regex.
+      BOOST_TEST(set_re.first == true);
+      BOOST_CHECK(!std::regex_match("default", re));
+      BOOST_CHECK(std::regex_match("foo", re));
+    }
+    {
+      auto set_re = call(f, {"--foo", "default"});
+      auto const& re = set_re.second;
+      // There is no equality on regex.
+      BOOST_TEST(set_re.first == true);
+      BOOST_CHECK(std::regex_match("default", re));
+      BOOST_CHECK(!std::regex_match("foo", re));
+    }
+  }
 }
 
 static
