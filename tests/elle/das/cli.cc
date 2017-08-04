@@ -1,6 +1,7 @@
 #include <elle/das/cli.hh>
 
 #include <numeric>
+#include <regex>
 
 #include <boost/range/numeric.hpp> // boost::accumulate
 
@@ -283,16 +284,38 @@ defaults()
   BOOST_TEST(call(proto, f, {"--baz", "23", "--foo", "01"}) == "0123");
 }
 
+/// Check support for elle::Defaulted.
 static
 void
 defaulted()
 {
   using elle::das::cli::call;
-  auto const f = elle::das::named::function(
-    [] (elle::Defaulted<bool> b) { return std::make_pair(bool(b), b.get()); },
-    foo = elle::defaulted(false));
-  BOOST_TEST(call(f, {})        == std::make_pair(false, false));
-  BOOST_TEST(call(f, {"--foo"}) == std::make_pair(true, true));
+  using elle::das::named::function;
+#define CHECK(Args, IsSet, Value)                       \
+  BOOST_TEST(call Args == std::make_pair(IsSet, Value))
+
+  // bool.
+  for (auto deflt: {false, true})
+  {
+    BOOST_TEST_MESSAGE("Checking with default = " << deflt);
+    auto const f = function(
+      [] (elle::Defaulted<bool> b) { return std::make_pair(bool(b), *b); },
+      foo = elle::defaulted(deflt));
+    CHECK((f, {}),                 false, deflt);
+    CHECK((f, {"--foo"}),          true,  true);
+    CHECK((f, {"--foo", "true"}),  true,  true);
+    CHECK((f, {"--foo", "false"}), true,  false);
+  }
+  // string.
+  {
+    auto const f = function(
+      [] (elle::Defaulted<std::string> b) { return std::make_pair(bool(b), *b); },
+      foo = elle::defaulted("default"s));
+    CHECK((f, {}),                    false, "default"s);
+    CHECK((f, {"--foo", "foo"s}),     true,  "foo"s);
+    CHECK((f, {"--foo", "default"s}), true,  "default"s);
+  }
+#undef CHECK
 }
 
 static

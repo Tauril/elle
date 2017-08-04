@@ -399,29 +399,60 @@ namespace elle
             return s.deserialize<I>();
           }
 
+          // Missing: the option was not set on the command line, get
+          // the default value, if there is one.
+          //
+          // There are three properties on which we dispatch:
+          // - has_def, i.e. whether we do have a default value.
+          // - is_defaulted when has_def: whether this default value is an elle::Defaulted.
+          // - is_bool when !has_def: whether the expected type is bool.
+          //
+          // We first dispatch on (has_def, is_defaulted), and only in the last
+          // case we use static_if for the dispatch on is_bool.
           template <typename T>
-          std::enable_if_t<default_has, T>
-          missing() const
+          auto
+          missing_impl(std::false_type has_def, std::false_type is_defaulted) const
+          {
+            return meta::static_if<std::is_same<T, bool>{}>
+              ([](auto& self) {
+                return false;
+              },
+               [](auto& self) -> T {
+                 ELLE_TRACE("raise missing error");
+                 throw MissingOption(self._option);
+               })
+              (*this);
+          }
+
+          template <typename T>
+          auto
+          missing_impl(std::true_type has_def, std::false_type is_defaulted) const
           {
             ELLE_TRACE("use default value: %s", this->_def);
             return this->_def;
           }
 
           template <typename T>
-          std::enable_if_t<!default_has && !std::is_same<T, bool>::value, T>
-          missing() const
+          auto
+          missing_impl(std::true_type has_def, std::true_type is_defaulted) const
           {
-            ELLE_TRACE("raise missing error");
-            throw MissingOption(this->_option);
+            ELLE_TRACE("use default value: %s", this->_def);
+            // _def carries the default value, it is not the default
+            // value.
+            return *this->_def;
           }
 
           template <typename T>
-          std::enable_if_t<!default_has && std::is_same<T, bool>::value, bool>
+          auto
           missing() const
           {
-            return false;
+            return missing_impl<T>(std::integral_constant<bool, default_has>{},
+                                   is_defaulted<Default>{});
           }
 
+
+          /// Convert the command line to a value of type I.
+          /// If the option is not used, return the default value.
           template <typename I>
           I
           convert() const

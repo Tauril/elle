@@ -82,6 +82,14 @@ namespace elle
     bool _set = false;
   };
 
+  /// Whether T is a Defaulted.
+  template <typename T>
+  struct is_defaulted : std::false_type{};
+
+  template <typename T>
+  struct is_defaulted<Defaulted<T>> : std::true_type{};
+
+
   template <typename T>
   std::ostream&
   operator <<(std::ostream& out, Defaulted<T> const& t)
@@ -94,8 +102,8 @@ namespace elle
 
   template <typename T>
   Defaulted<T>
-  defaulted(T&& t)
+  defaulted(T t)
   {
-    return Defaulted<T>(std::forward<T>(t), false);
+    return Defaulted<T>(std::move(t), false);
   }
 }
