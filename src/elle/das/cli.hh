@@ -424,27 +424,55 @@ namespace elle
           // - has_def, i.e. whether we do have a default value.
           // - is_defaulted when has_def: whether this default value is an elle::Defaulted.
           // - is_bool when !has_def: whether the expected type is bool.
-          //
-          // We first dispatch on (has_def, is_defaulted), and only in the last
-          // case we use static_if for the dispatch on is_bool.
-          template <typename T>
-          auto
-          missing_impl(std::false_type has_def, std::false_type is_defaulted) const
+          enum class DefaultType
           {
-            return meta::static_if<std::is_same<T, bool>{}>
-              ([](auto const & self) {
-                return false;
-              },
-               [](auto const& self) -> T {
-                 ELLE_TRACE("raise missing error");
-                 throw MissingOption(self._option);
-               })
-              (*this);
+            defaulted, /// The default is an elle::Defaulted,
+            boolean,   /// There is no default, we aim at bool,
+            missing,   /// There is no default, we don't aim at bool.
+            plain,     /// There is a default, it is not an elle::Defaulted,
+          };
+
+          /// Characterize how we get the default value for a missing option.
+          ///
+          /// @param T  the expected value type
+          template <typename T>
+          constexpr
+          static
+          DefaultType
+          default_type()
+          {
+            if (is_defaulted<Default>{})
+              return DefaultType::defaulted;
+            else if (default_has)
+              return DefaultType::plain;
+            else if (std::is_same<T, bool>{})
+              return DefaultType::boolean;
+            else
+              return DefaultType::missing;
+          }
+
+          template <DefaultType type>
+          using DefaultType_c = std::integral_constant<DefaultType, type>;
+
+          template <typename T>
+          ELLE_COMPILER_ATTRIBUTE_NORETURN
+          T
+          missing_impl(DefaultType_c<DefaultType::missing>) const
+          {
+            ELLE_TRACE("raise missing error");
+            throw MissingOption(this->_option);
           }
 
           template <typename T>
           auto
-          missing_impl(std::true_type has_def, std::false_type is_defaulted) const
+          missing_impl(DefaultType_c<DefaultType::boolean>) const
+          {
+            return false;
+          }
+
+          template <typename T>
+          auto
+          missing_impl(DefaultType_c<DefaultType::plain>) const
           {
             ELLE_TRACE("use default value: %s", this->_def);
             return this->_def;
@@ -452,7 +480,7 @@ namespace elle
 
           template <typename T>
           auto
-          missing_impl(std::true_type has_def, std::true_type is_defaulted) const
+          missing_impl(DefaultType_c<DefaultType::defaulted>) const
           {
             ELLE_TRACE("use default value: %s", this->_def);
             // _def carries the default value, it is not the default
@@ -464,10 +492,8 @@ namespace elle
           auto
           missing() const
           {
-            return missing_impl<T>(std::integral_constant<bool, default_has>{},
-                                   is_defaulted<Default>{});
+            return missing_impl<T>(DefaultType_c<default_type<T>()>{});
           }
-
 
           /// Convert the command line to a value of type I.
           /// If the option is not used, return the default value.
