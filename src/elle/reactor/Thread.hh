@@ -110,7 +110,6 @@ namespace elle
       ///
       /// @pre Must be in a invoked from another Thread.
       ///
-      /// @param scheduler The Scheduler in charge of the Thread.
       /// @param name A descriptive name of Thread to be spawn.
       /// @param action The action to execute.
       /// @param dispose Put the Scheduler in charge of destroying the Thread.
@@ -121,7 +120,6 @@ namespace elle
       ///
       /// @pre Must be in a invoked from another Thread.
       ///
-      /// @param scheduler The Scheduler in charge of the Thread.
       /// @param name A descriptive name of Thread to be spawn.
       /// @param action The action to execute.
       /// @param args The named arguments `dispose` and `managed`.
@@ -365,6 +363,7 @@ namespace elle
       Scheduler& scheduler();
     private:
       friend class Scheduler;
+      ELLE_ATTRIBUTE(Thread*, parent_thread);
       ELLE_ATTRIBUTE(std::unique_ptr<backend::Thread>, thread);
       ELLE_ATTRIBUTE(Scheduler&, scheduler);
       ELLE_ATTRIBUTE_R(bool, terminating);

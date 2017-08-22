@@ -153,6 +153,9 @@ namespace elle
           if (thread.terminating())
             std::cerr << " (terminating)";
           std::cerr << std::endl;
+          std::cerr << "    parent:" << std::endl;
+          if (thread._parent_thread)
+            std::cerr << "      " << *thread._parent_thread << std::endl;
           std::cerr << "    waiting:" << std::endl;
           for (auto t: thread.waited())
             std::cerr << "      " << *t << std::endl;

@@ -34,6 +34,7 @@ namespace elle
       , _waited()
       , _timeout(false)
       , _timeout_timer(scheduler.io_service())
+      , _parent_thread(scheduler.current())
       , _thread(scheduler._manager->make_thread(
                   name,
                   [this, a=std::move(action)] ()
