@@ -3323,6 +3323,7 @@ namespace for_each
       {
         BOOST_CHECK_EQUAL(c, std::vector<int>({0, 1, 2}));
         elle::reactor::yield();
+        elle::reactor::yield();
         BOOST_CHECK_EQUAL(c, std::vector<int>({1, 2, 3}));
         elle::reactor::yield();
         b.open();

@@ -15,45 +15,51 @@ namespace elle
     void
     for_each_parallel(C&& c, F const& f, std::string const& name)
     {
-      elle::With<reactor::Scope>(name) << [&] (reactor::Scope& scope)
-      {
-        for (auto&& elt: std::forward<C>(c))
+      elle::reactor::Thread for_each(
+        "outter for-each",
+        [&]
         {
-          auto constexpr lvalue =
-            std::is_lvalue_reference<decltype(elt)>::value;
-          using Wrapper = std::conditional_t<
-            lvalue,
-            std::reference_wrapper<std::remove_reference_t<decltype(elt)>>,
-            decltype(elt)>;
-          scope.run_background(
-            elle::print("{}: {}: {}",
-                        reactor::scheduler().current()->name(),
-                        name.empty() ? "for-each" : name,
-                        elt),
-            [
-              e = Wrapper{std::forward<decltype(elt)>(elt)},
-              &f, &scope]
+          elle::With<reactor::Scope>(name) << [&] (reactor::Scope& scope)
+          {
+            for (auto&& elt: std::forward<C>(c))
             {
-              try
-              {
-                elle::meta::static_if<lvalue>(
-                  [&f] (auto&& e)
+              auto constexpr lvalue =
+                std::is_lvalue_reference<decltype(elt)>::value;
+              using Wrapper = std::conditional_t<
+                lvalue,
+                std::reference_wrapper<std::remove_reference_t<decltype(elt)>>,
+                decltype(elt)>;
+              scope.run_background(
+                elle::print("{}: {}: {}",
+                            reactor::scheduler().current()->name(),
+                            name.empty() ? "for-each" : name,
+                            elt),
+                [
+                  e = Wrapper{std::forward<decltype(elt)>(elt)},
+                  &f, &scope]
+                {
+                  try
                   {
-                    f(e.get());
-                  },
-                  [&f] (auto&& e)
+                    elle::meta::static_if<lvalue>(
+                      [&f] (auto&& e)
+                      {
+                        f(e.get());
+                      },
+                      [&f] (auto&& e)
+                      {
+                        f(std::forward<decltype(e)>(e));
+                      })(std::forward<decltype(e) const>(e));
+                  }
+                  catch (Break const&)
                   {
-                    f(std::forward<decltype(e)>(e));
-                  })(std::forward<decltype(e) const>(e));
-              }
-              catch (Break const&)
-              {
-                scope.terminate_now();
-              }
-            });
-        }
-        reactor::wait(scope);
-      };
+                    scope.terminate_now();
+                  }
+                });
+            }
+            reactor::wait(scope);
+          };
+        });
+      reactor::wait(for_each);
     }
 
     inline
