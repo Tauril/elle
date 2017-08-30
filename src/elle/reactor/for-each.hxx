@@ -16,6 +16,17 @@ namespace elle
       : elle::Exception("continue")
     {}
 
+    template <typename T, typename F>
+    auto
+    for_each_parallel(std::initializer_list<T> const& c,
+                      F const& f,
+                      std::string const& name)
+      -> decltype(details::for_each_parallel_result(f, std::vector<T>()))
+    {
+      return for_each_parallel(
+        elle::as_range(begin(c), end(c)), std::move(f), std::move(name));
+    }
+
     template <typename C, typename F>
     auto
     for_each_parallel(C&& c, F const& f, std::string const& name)

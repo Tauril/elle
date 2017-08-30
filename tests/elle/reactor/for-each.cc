@@ -140,6 +140,18 @@ ELLE_TEST_SCHEDULED(parallel_break)
   BOOST_CHECK_EQUAL(c, std::vector<int>({1, 1, 2}));
 }
 
+ELLE_TEST_SCHEDULED(initializer_list)
+{
+  int i = 0;
+  elle::reactor::for_each_parallel(
+    {0, 1, 2},
+    [&] (int c)
+    {
+      i += c;
+    });
+  BOOST_TEST(i == 3);
+}
+
 // ELLE_TEST_SCHEDULED(moved_not_copiable)
 // {
 //   std::vector<std::unique_ptr<int>> v;
@@ -169,5 +181,6 @@ ELLE_TEST_SUITE()
   master.add(BOOST_TEST_CASE(valued));
   master.add(BOOST_TEST_CASE(valued_continue));
   master.add(BOOST_TEST_CASE(parallel_break));
+  master.add(BOOST_TEST_CASE(initializer_list));
   // master.add(BOOST_TEST_CASE(moved_not_copiable));
 }

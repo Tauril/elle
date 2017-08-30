@@ -58,6 +58,12 @@ namespace elle
     for_each_parallel(C&& c, F const& f, std::string const& name = {})
       -> decltype(details::for_each_parallel_result(f, std::forward<C>(c)));
 
+    template <typename T, typename F>
+    auto
+    for_each_parallel(std::initializer_list<T> const& c, F const& f,
+                      std::string const& name = {})
+      -> decltype(details::for_each_parallel_result(f, std::vector<T>()));
+
     /// Break exception used to break for_each_parallel execution.
     class Break
       : public elle::Exception
