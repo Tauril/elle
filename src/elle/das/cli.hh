@@ -441,14 +441,11 @@ namespace elle
           DefaultType
           default_type()
           {
-            if (is_defaulted<Default>{})
-              return DefaultType::defaulted;
-            else if (default_has)
-              return DefaultType::plain;
-            else if (std::is_same<T, bool>{})
-              return DefaultType::boolean;
-            else
-              return DefaultType::missing;
+           // GCC 4.9: stick to C++11 constexpr function: a single return.
+            return (is_defaulted<Default>{}   ? DefaultType::defaulted
+                    : default_has             ? DefaultType::plain
+                    : std::is_same<T, bool>{} ? DefaultType::boolean
+                    :                           DefaultType::missing);
           }
 
           template <DefaultType type>
