@@ -9,16 +9,16 @@ namespace elle
   namespace serialization
   {
     Serializer::Serializer(bool versioned)
-      : _versioned(versioned)
-    {
-      static_assert(Details::api<int>() == Details::pod, "");
-      static_assert(Details::api<unsigned long>() == Details::pod, "");
-    }
+      : Serializer(Versions(), versioned)
+    {}
 
     Serializer::Serializer(Versions versions, bool versioned)
       : _versioned(versioned)
       , _versions(std::move(versions))
-    {}
+    {
+      static_assert(Details::api<int>() == Details::pod, "");
+      static_assert(Details::api<unsigned long>() == Details::pod, "");
+    }
 
     /*--------------.
     | Enter / leave |
@@ -181,6 +181,31 @@ namespace elle
       this->_enter("value");
       elle::SafeFinally leave([&] { this->_leave("value");});
       f(index);
+    }
+
+    std::unordered_map<elle::TypeInfo, boost::any>&
+    hierarchy_map()
+    {
+      static std::unordered_map<elle::TypeInfo, boost::any> value;
+      return value;
+    }
+
+    std::unordered_map<
+      std::string, std::unordered_map<TypeInfo, std::string>>&
+    hierarchy_rmap()
+    {
+      static std::unordered_map<
+        std::string, std::unordered_map<TypeInfo, std::string>> value;
+      return value;
+    }
+
+    std::unordered_map<
+      TypeInfo, std::function<std::exception_ptr (elle::Exception&&)>>&
+    ExceptionMaker<elle::Exception>::_map()
+    {
+      static std::unordered_map<
+        TypeInfo, std::function<std::exception_ptr (elle::Exception&&)>> map;
+      return map;
     }
   }
 }

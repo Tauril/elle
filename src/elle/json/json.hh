@@ -13,7 +13,41 @@ namespace elle
 {
   namespace json ELLE_API
   {
-    using Json = boost::any;
+    class Json
+      : public boost::any
+    {
+    public:
+      Json() = default;
+      Json(Json&& j) = default;
+      Json(Json& j) = default;
+      Json(Json const& j) = default;
+      template <typename T>
+      Json(T&& v);
+
+      Json&
+      operator =(Json const&) = default;
+
+      Json&
+      operator[] (std::string const& key);
+
+      Json const&
+      operator[] (std::string const& key) const;
+
+      explicit operator bool() const;
+
+      using iterator = std::vector<Json>::iterator;
+      using const_iterator = std::vector<Json>::const_iterator;
+      using value_type = Json;
+      iterator
+      begin();
+      iterator
+      end();
+      const_iterator
+      begin() const;
+      const_iterator
+      end() const;
+    };
+
     using Array = std::vector<Json>;
     using Object = std::unordered_map<std::string, Json>;
     using OrderedObject = std::map<std::string, Json>;
@@ -61,9 +95,14 @@ namespace elle
     pretty_print(Json const& any);
 
     std::ostream&
+    operator <<(std::ostream& stream, Json const& json);
+
+    std::ostream&
     operator <<(std::ostream& stream, elle::json::Object const& obj);
 
     std::ostream&
     operator <<(std::ostream& stream, elle::json::OrderedObject const& obj);
   }
 }
+
+#include <elle/json/json.hxx>

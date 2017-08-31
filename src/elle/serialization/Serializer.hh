@@ -101,9 +101,23 @@ namespace elle
       /// @param value The value to register.
       template <typename T>
       void
-      set(T value)
+      set(T&& value)
       {
-        this->_value[type_info<T>()] = std::move(value);
+        this->_value[type_info<T>()] = std::forward<T>(value);
+      }
+
+      /// Get @a value from the context.
+      ///
+      /// @param value A reference to a value to be filled.
+      template <typename T>
+      T
+      get()
+      {
+        auto ti = type_info<T>();
+        auto it = this->_value.find(ti);
+        if (it == this->_value.end())
+          elle::err("missing serialization context for %s", ti.name());
+        return boost::any_cast<T>(it->second);
       }
 
       /// Get @a value from the context.
@@ -113,11 +127,7 @@ namespace elle
       void
       get(T& value)
       {
-        auto ti = type_info<T>();
-        auto it = this->_value.find(ti);
-        if (it == this->_value.end())
-          elle::err("missing serialization context for %s", ti.name());
-        value = boost::any_cast<T>(it->second);
+        value = this->get<T>();
       }
 
       /// Get @a value from the Context. If it's not in the Context, use @a
@@ -475,13 +485,21 @@ namespace elle
       template <typename T>
       void
       serialize_context(T& value);
+      /// The value of type T from the Context.
+      ///
+      /// N.B. If the serializer is in input mode, this method does nothing.
+      ///
+      /// @param T The type of the value to get from the context.
+      template <typename T>
+      T
+      serialize_context();
       /// Set a value for a given type T in the Context.
       ///
       /// @tparam T The type of the value to store.
       /// @param value The value to store.
       template <typename T>
       void
-      set_context(T value);
+      set_context(T&& value);
       /// Add @a given Context to our Context.
       ///
       /// @param context The Context to add.
