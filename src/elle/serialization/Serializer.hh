@@ -92,18 +92,18 @@ namespace elle
         using swallow = int[];
         (void) swallow
         {
-          (this->set(std::forward<Args>(args)), 0)...
+          (this->set<std::decay_t<Args>>(std::forward<Args>(args)), 0)...
         };
       }
 
       /// Register @a value to the context.
       ///
       /// @param value The value to register.
-      template <typename T>
+      template <typename T, typename A>
       void
-      set(T&& value)
+      set(A&& value)
       {
-        this->_value[type_info<T>()] = std::forward<T>(value);
+        this->_value[type_info<T>()] = std::forward<A>(value);
       }
 
       /// Get @a value from the context.
@@ -497,9 +497,9 @@ namespace elle
       ///
       /// @tparam T The type of the value to store.
       /// @param value The value to store.
-      template <typename T>
+      template <typename T, typename A>
       void
-      set_context(T&& value);
+      set_context(A&& value);
       /// Add @a given Context to our Context.
       ///
       /// @param context The Context to add.
