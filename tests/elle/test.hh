@@ -62,12 +62,11 @@ namespace
 {
   namespace _detail
   {
-    // A readable timestamp, printable with elle::print.
+    // A timestamp, printable with elle::print.
     auto
     now()
     {
-      using namespace boost::posix_time;
-      return microsec_clock::local_time();
+      return std::chrono::system_clock::now();
     }
   }
 

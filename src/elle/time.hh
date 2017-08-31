@@ -42,11 +42,12 @@ namespace elle
     return t + std::chrono::duration_cast<Duration>(std::chrono::nanoseconds(nsec));
   };
 
-  /// Parse a date in ISO 8601 format.
+  /// Parse a date in ISO 8601 format such as "2017-08-31T13:02:41".
   boost::posix_time::ptime
   iso8601_to_posix_time(std::string const& str);
 
-  /// Convert to ISO 8601.
+  /// Convert to ISO 8601, i.e., "2017-08-31T13:02:41", not
+  /// "20170831T130241" as boost::to_iso_string does.
   std::string
   to_iso8601(boost::posix_time::ptime const& t);
 }
