@@ -176,7 +176,7 @@ namespace elle
         ///
         /// @param url          The URL to query.
         /// @param method       The HTTP method to use.
-        /// @param content_type The MIME type of the uploded body.
+        /// @param content_type The MIME type of the uploaded body.
         /// @param conf         The Configuration to apply.
         ///
         /// @throw RequestError if the request cannot be created and started.
@@ -325,7 +325,7 @@ namespace elle
       ///
       /// @param url  The URL to query.
       /// @param conf The Configuration for the request.
-      /// \returns The server response body.
+      /// @returns The server response body.
       elle::Buffer
       get(std::string const& url,
           Request::Configuration conf = Request::Configuration());
