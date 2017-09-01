@@ -310,6 +310,28 @@ def set_local_libcxx(cxx_toolkit):
       return True
   return _set_local_libcxx
 
+
+class PackageExtractor(drake.Builder):
+
+  def __init__(self, package, destination, targets = []):
+
+    self.__package = package
+    self.__destination = destination
+    self.__expected = list(map(lambda t: drake.node(destination / t),
+                               targets))
+    super().__init__([package], self.__expected)
+
+  def execute(self):
+    self.output('Extract %s to %s' % (self.__package.path(),
+                                      self.__destination),
+                'Extract %s' % self.__package.path())
+    import pyunpack
+    pyunpack.Archive(str(self.__package.path(absolute = True))).extractall(str(self.__destination))
+    return True
+
+  def hash(self):
+    return list(map(str, [self.__package, self.__destination, self.__expected]))
+
 class Keychain():
 
   def __init__(self, keychain_path, keychain_password):
