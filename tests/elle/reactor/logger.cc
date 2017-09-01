@@ -11,6 +11,7 @@
 #include <elle/reactor/Thread.hh>
 
 using namespace std::chrono;
+using namespace std::literals;
 
 elle::PluginLoad load_reactor_logger_plugins(
   elle::reactor::plugins::logger_indentation,
