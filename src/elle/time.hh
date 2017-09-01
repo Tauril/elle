@@ -62,6 +62,6 @@ namespace elle
     // steady_clock.  The latter needs tz support to be printed, which
     // requires the use of H. Hinnant's tz lib, which we avoided so
     // far.  See log/TextLogger for an alternative if needed.
-    return date::format("%FT%T", t);
+    return date::format("%FT%T", date::floor<std::chrono::microseconds>(t));
   }
 }
