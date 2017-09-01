@@ -66,22 +66,6 @@ namespace elle
     return std::chrono::duration_cast<std::chrono::seconds>(d).count();
   }
 
-  /// The number of microseconds in `d`.
-  inline
-  auto
-  num_milliseconds(Duration d)
-  {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
-  }
-
-  /// The number of microseconds in `d`.
-  inline
-  auto
-  num_microseconds(Duration d)
-  {
-    return std::chrono::duration_cast<std::chrono::microseconds>(d).count();
-  }
-
   ELLE_API
   std::ostream&
   operator << (std::ostream& s, const DurationOpt& opt);

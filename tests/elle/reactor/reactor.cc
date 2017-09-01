@@ -1091,8 +1091,8 @@ ELLE_TEST_SCHEDULED(every)
     });
   elle::reactor::wait(*thread);
   BOOST_CHECK_EQUAL(i, iter);
-  double elapsed = elle::num_milliseconds(elle::Clock::now() - start);
-  double expected = elle::num_milliseconds(delay) * iter;
+  auto const elapsed = elle::Clock::now() - start;
+  auto const expected = delay * iter;
   BOOST_CHECK_GE(elapsed, expected);
   elle::reactor::sleep(delay * 3);
   BOOST_CHECK_EQUAL(i, iter);
