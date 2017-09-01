@@ -3,6 +3,7 @@
 #include <elle/UUID.hh>
 #include <elle/serialization/json.hh>
 
+#include <elle/date/date.hh>
 #include <elle/das/model.hh>
 #include <elle/das/serializer.hh>
 #include <elle/das/printer.hh>
@@ -37,22 +38,25 @@ ELLE_DAS_SYMBOL(id);
 ELLE_DAS_SYMBOL(release_date);
 ELLE_DAS_SYMBOL(tags);
 
+using TimePoint = std::system_clock::time_point;
+
 /// Declare a Record class with
 struct Record
 {
   std::string title;
   std::string artist;
   elle::UUID id;
-  boost::posix_time::ptime release_date;
+  TimePoint release_date;
   std::vector<std::string> tags;
 
   // The Model can be declared in the class.
-  using Model = elle::das::Model<Record,
-                                 elle::meta::List<Symbol_title,
-                                                  Symbol_artist,
-                                                  Symbol_id,
-                                                  Symbol_release_date,
-                                                  Symbol_tags>>;
+  using Model =
+    elle::das::Model<Record,
+                     decltype(elle::meta::list(title,
+                                               artist,
+                                               id,
+                                               release_date,
+                                               tags));
 };
 
 struct Records
@@ -66,8 +70,8 @@ struct Records
 // implies that you can more than one model per class).
 ELLE_DAS_SYMBOL(label);
 ELLE_DAS_SYMBOL(records);
-using DasRecords = elle::das::Model<Records, elle::meta::List<Symbol_label,
-                                                              Symbol_records>>;
+using DasRecords =
+  elle::das::Model<Records, decltype(elle::meta::list(label, records));
 ELLE_DAS_MODEL_DEFAULT(Records, DasRecords);
 
 // Make all class::Model printable.
@@ -80,19 +84,20 @@ ELLE_DAS_SERIALIZE(DasRecords);
 int
 main()
 {
+  using namespace date;
   auto r = Records{
     "Favorites",
     {
       {
         "Sandstorm", "Darude",
         elle::UUID("31900f3a-adaf-11e6-80f5-76304dec7eb7"),
-        boost::posix_time::time_from_string("1999-11-26 00:00:00.000"),
+        sys_days{1999_y/nov/26},
         {"Electronic", "Dance"}
       },
       {
         "Never Gonna Give You Up", "Rick Astley",
         elle::UUID("1549b8a6-6cd7-453e-83de-49f3dc6b0e85"),
-        boost::posix_time::time_from_string("1987-01-01 00:00:00.000"),
+        sys_days(1987_y/jan/1},
         {"'80s Pop"}
       }
     }
@@ -104,5 +109,4 @@ main()
     elle::das::serialize(r, serializer);
   }
   std::cout << "records (in json): \n" << stream.str() << '\n';
-  return 0;
 }
