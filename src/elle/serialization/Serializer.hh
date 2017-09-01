@@ -103,7 +103,7 @@ namespace elle
       void
       set(A&& value)
       {
-        this->_value[type_info<T>()] = std::forward<A>(value);
+        this->_value[type_info<T>()] = T(std::forward<A>(value));
       }
 
       /// Get @a value from the context.
