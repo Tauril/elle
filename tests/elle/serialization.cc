@@ -1516,8 +1516,8 @@ context()
       serializer.serialize_forward(source);
     }
     typename Format::SerializerIn serializer(stream, false);
-    serializer.template set_context<std::string>("yes");
-    Context ctx(serializer);
+    serializer.template set_context<std::string>("yes"s);
+    auto ctx = Context(serializer);
     BOOST_CHECK_EQUAL(ctx.msg(), source.msg());
     BOOST_CHECK_EQUAL(ctx.ctx(), "yes");
   }
@@ -1527,14 +1527,15 @@ class SpecificError
   : public elle::Error
 {
 public:
+  using Super = elle::Error;
   SpecificError()
-    : elle::Error("much details wow")
+    : Super("much details wow")
     , _dummy(857)
   {}
 
   SpecificError(elle::serialization::SerializerIn& s,
                 elle::Version const& v)
-    : elle::Error("much details wow")
+    : Super("much details wow")
     , _dummy(0)
   {
     this->serialize(s, v);

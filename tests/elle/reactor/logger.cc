@@ -10,6 +10,8 @@
 #include <elle/reactor/logger.hh>
 #include <elle/reactor/Thread.hh>
 
+using namespace std::chrono;
+
 elle::PluginLoad load_reactor_logger_plugins(
   elle::reactor::plugins::logger_indentation,
   elle::reactor::plugins::logger_tags
@@ -76,10 +78,9 @@ parallel_write()
       elle::reactor::Scheduler sched;
       elle::reactor::Thread t(sched, "logger", [&counter]()
         {
-          using namespace boost::posix_time;
-          ptime deadline =
-            microsec_clock::local_time() + seconds(3);
-          while (microsec_clock::local_time() < deadline)
+          using Clock = std::chrono::system_clock;
+          auto const deadline = Clock::now() + 3s;
+          while (Clock::now() < deadline)
           {
             ELLE_LOG_COMPONENT("out");
             ELLE_LOG("out")

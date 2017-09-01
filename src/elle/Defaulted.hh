@@ -9,7 +9,7 @@ namespace elle
   ///
   /// The value returned is read-only, to keep consistency.
   ///
-  /// \code{.cc}
+  /// @code{.cc}
   ///
   /// auto d = Defaulted<bool>(true);
   /// assert(!d); // d was not set.
@@ -18,12 +18,14 @@ namespace elle
   /// assert(d); // d was set.
   /// assert(!d.get()); // d's value is now false.
   ///
-  /// \endcode
+  /// @endcode
   template <typename T>
   class Defaulted
   {
   public:
-    Defaulted(T def, bool set = true)
+    using Value = T;
+
+    Defaulted(Value def, bool set = true)
       : _value{std::move(def)}
       , _set{set}
     {}
@@ -52,21 +54,21 @@ namespace elle
     }
 
     /// The value, readonly.
-    T const&
+    Value const&
     get() const
     {
       return this->_value;
     }
 
     /// The value, readonly.
-    T const&
+    Value const&
     operator*() const
     {
       return this->get();
     }
 
     /// A pointer to the value, readonly.
-    T const*
+    Value const*
     operator->() const
     {
       return &this->_value;
@@ -74,11 +76,19 @@ namespace elle
 
   private:
     /// The value.
-    ELLE_ATTRIBUTE(T, value);
+    ELLE_ATTRIBUTE(Value, value);
     /// Whether a value was specified (as opposed to remaining equal
     /// to the initial value).
     bool _set = false;
   };
+
+  /// Whether T is a Defaulted.
+  template <typename T>
+  struct is_defaulted : std::false_type{};
+
+  template <typename T>
+  struct is_defaulted<Defaulted<T>> : std::true_type{};
+
 
   template <typename T>
   std::ostream&
@@ -92,8 +102,8 @@ namespace elle
 
   template <typename T>
   Defaulted<T>
-  defaulted(T&& t)
+  defaulted(T t)
   {
-    return Defaulted<T>(std::forward<T>(t), false);
+    return Defaulted<T>(std::move(t), false);
   }
 }

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <regex>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
@@ -158,6 +159,8 @@ namespace elle
       | Options |
       `--------*/
 
+      /// Auxiliary info about an option: its short name, help string,
+      /// and whether positional.
       struct Option
       {
         Option(char short_name = 0,
@@ -168,9 +171,13 @@ namespace elle
           , positional(positional)
         {}
 
-        char short_name;
-        std::string help;
-        bool positional;
+        Option(std::string help)
+          : help{std::move(help)}
+        {}
+
+        char short_name = 0;
+        std::string help = "";
+        bool positional = false;
       };
 
       using Options = std::unordered_map<std::string, Option>;
@@ -347,9 +354,9 @@ namespace elle
             {
               return elle::from_string<bool>(v);
             }
-            catch (std::invalid_argument)
+            catch (std::invalid_argument const& e)
             {
-              throw OptionValueError(this->_option, v, "invalid boolean");
+              throw OptionValueError(this->_option, v, e.what());
             }
           }
 
@@ -360,13 +367,28 @@ namespace elle
             return v;
           }
 
+          // FIXME: move this into elle::from_string.
+          template <typename I>
+          std::enable_if_t<std::is_same<I, std::regex>::value, I>
+          convert(std::string const& v, int) const
+          {
+            try
+            {
+              return std::regex{v};
+            }
+            catch (std::regex_error const& e)
+            {
+              throw OptionValueError(this->_option, v, e.what());
+            }
+          }
+
           template <typename I>
           std::enable_if_t<std::is_base_of<boost::optional_detail::optional_tag, I>::value, I>
           convert(std::string const& v, int) const
           {
             if (this->_values.empty())
               return boost::none;
-            else if (this->_values.size() > 1)
+            else if (1 < this->_values.size())
               throw DuplicateOption(this->_option);
             else
               return convert<typename I::value_type>(this->_values[0], 0);
@@ -391,6 +413,8 @@ namespace elle
             }
           }
 
+          /// Last resort: see if our Json deserialization understands this.
+          // FIXME: move this into elle::from_string.
           template <typename I>
           I
           convert(std::string const& v, ...) const
@@ -399,29 +423,83 @@ namespace elle
             return s.deserialize<I>();
           }
 
-          template <typename T>
-          std::enable_if_t<default_has, T>
-          missing() const
+          // Missing: the option was not set on the command line, get
+          // the default value, if there is one.
+          //
+          // There are three properties on which we dispatch:
+          // - has_def, i.e. whether we do have a default value.
+          // - is_defaulted when has_def: whether this default value is an elle::Defaulted.
+          // - is_bool when !has_def: whether the expected type is bool.
+          enum class DefaultType
           {
-            ELLE_TRACE("use default value: %s", this->_def);
-            return this->_def;
+            defaulted, /// The default is an elle::Defaulted,
+            boolean,   /// There is no default, we aim at bool,
+            missing,   /// There is no default, we don't aim at bool.
+            plain,     /// There is a default, it is not an elle::Defaulted,
+          };
+
+          /// Characterize how we get the default value for a missing option.
+          ///
+          /// @param T  the expected value type
+          template <typename T>
+          constexpr
+          static
+          DefaultType
+          default_type()
+          {
+           // GCC 4.9: stick to C++11 constexpr function: a single return.
+            return (is_defaulted<Default>{}   ? DefaultType::defaulted
+                    : default_has             ? DefaultType::plain
+                    : std::is_same<T, bool>{} ? DefaultType::boolean
+                    :                           DefaultType::missing);
           }
 
+          template <DefaultType type>
+          using DefaultType_c = std::integral_constant<DefaultType, type>;
+
           template <typename T>
-          std::enable_if_t<!default_has && !std::is_same<T, bool>::value, T>
-          missing() const
+          ELLE_COMPILER_ATTRIBUTE_NORETURN
+          T
+          missing_impl(DefaultType_c<DefaultType::missing>) const
           {
             ELLE_TRACE("raise missing error");
             throw MissingOption(this->_option);
           }
 
           template <typename T>
-          std::enable_if_t<!default_has && std::is_same<T, bool>::value, bool>
-          missing() const
+          auto
+          missing_impl(DefaultType_c<DefaultType::boolean>) const
           {
             return false;
           }
 
+          template <typename T>
+          auto
+          missing_impl(DefaultType_c<DefaultType::plain>) const
+          {
+            ELLE_TRACE("use default value: %s", this->_def);
+            return this->_def;
+          }
+
+          template <typename T>
+          auto
+          missing_impl(DefaultType_c<DefaultType::defaulted>) const
+          {
+            ELLE_TRACE("use default value: %s", this->_def);
+            // _def carries the default value, it is not the default
+            // value.
+            return *this->_def;
+          }
+
+          template <typename T>
+          auto
+          missing() const
+          {
+            return missing_impl<T>(DefaultType_c<default_type<T>()>{});
+          }
+
+          /// Convert the command line to a value of type I.
+          /// If the option is not used, return the default value.
           template <typename I>
           I
           convert() const
@@ -482,7 +560,7 @@ namespace elle
 
           operator bool() const
           {
-            ELLE_TRACE_SCOPE("convert %s to boolean", this->_option);
+            ELLE_TRACE_SCOPE("convert %s to Boolean", this->_option);
             auto const res = this->_flag || this->convert<bool>();
             this->_check_remaining();
             return res;
@@ -518,7 +596,8 @@ namespace elle
           }
 
           /// A conversion that allows to know whether we have the
-          /// option's default value, or a user defined one.
+          /// option's default value, or a user defined one, even if
+          /// the user's value is the same as the default value.
           template <typename I>
           operator elle::Defaulted<I>() const
           {

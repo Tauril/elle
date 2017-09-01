@@ -5,7 +5,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp> // boost::contains
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem.hpp>
 
 #include <elle/test.hh>
@@ -205,9 +204,6 @@ _environment_format_test(bool env)
   BOOST_CHECK_EQUAL(logger->component_level("Test"),
                     Level::log);
   ELLE_LOG("Test");
-  // FIXME: Checking time printing is non-deterministic.
-  // auto time = boost::posix_time::second_clock::local_time();
-  // res << "[1m" << time << ": [Test] Test\n[0m";
   res << "[1m[Test] Test\n[0m";
   BOOST_CHECK_EQUAL(ss.str(), res.str());
 
@@ -357,11 +353,6 @@ _environment_format_test(bool env)
   elle::log::logger(std::unique_ptr<elle::log::Logger>(logger));
   BOOST_CHECK_EQUAL(logger->component_level("Test"), Level::log);
   ELLE_WARN("Test 5");
-  // FIXME: Checking time printing is non-deterministic.
-  // res << "[33;01;33m"
-  //     << boost::posix_time::second_clock::local_time() << ": "
-  //     << "[Test] [" << boost::lexical_cast<std::string>(getpid()) << "] "
-  //     << "[warning] Test 5\n[0m";
   res << "[33;01;33m[Test] ["
       << boost::lexical_cast<std::string>(getpid()) << "] "
       << "[warning] Test 5\n[0m";
@@ -722,9 +713,10 @@ parallel_write()
 
   auto action = [](int& counter)
     {
-      using namespace boost::posix_time;
-      ptime deadline = microsec_clock::local_time() + seconds(10);
-      while (microsec_clock::local_time() < deadline && counter < 64)
+      using namespace std::literals;
+      using Clock = std::chrono::steady_clock;
+      auto deadline = Clock::now() + 10s;
+      while (Clock::now() < deadline && counter < 64)
       {
         ELLE_LOG_COMPONENT("out");
         ELLE_LOG("out")
