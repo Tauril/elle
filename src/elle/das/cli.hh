@@ -159,6 +159,8 @@ namespace elle
       | Options |
       `--------*/
 
+      /// Auxiliary info about an option: its short name, help string,
+      /// and whether positional.
       struct Option
       {
         Option(char short_name = 0,
@@ -169,9 +171,13 @@ namespace elle
           , positional(positional)
         {}
 
-        char short_name;
-        std::string help;
-        bool positional;
+        Option(std::string help)
+          : help{std::move(help)}
+        {}
+
+        char short_name = 0;
+        std::string help = "";
+        bool positional = false;
       };
 
       using Options = std::unordered_map<std::string, Option>;
