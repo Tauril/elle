@@ -26,10 +26,10 @@ namespace asio = boost::asio;
 namespace ip = boost::asio::ip;
 namespace network = reactor::network;
 
-namespace /*annon*/
+namespace
 {
-  class PunchException:
-    public elle::Exception
+  class PunchException
+    : public elle::Exception
   {
   public:
     PunchException(elle::String const& message):
@@ -40,8 +40,8 @@ namespace /*annon*/
     {}
   };
 
-  class HeartbeatFailed:
-    public elle::Exception
+  class HeartbeatFailed
+    : public elle::Exception
   {
   public:
     HeartbeatFailed(elle::String const& message):
@@ -52,8 +52,8 @@ namespace /*annon*/
     {}
   };
 
-  class PunchTimeout:
-    public PunchException
+  class PunchTimeout
+    : public PunchException
   {
   public:
     PunchTimeout(elle::String const& message):
@@ -64,8 +64,8 @@ namespace /*annon*/
     {}
   };
 
-  class PunchFormat:
-    public PunchException
+  class PunchFormat
+    : public PunchException
   {
   public:
     PunchFormat(elle::String const& message):
@@ -75,7 +75,7 @@ namespace /*annon*/
       PunchFormat(e.what())
     {}
   };
-} /*annon*/
+}
 
 namespace elle
 {
@@ -141,7 +141,7 @@ namespace elle
       }
 
       boost::asio::ip::udp::endpoint
-      Hole::_punch(unsigned short port, boost::posix_time::seconds timeout)
+      Hole::_punch(unsigned short port, elle::Duration timeout)
       {
         ELLE_DEBUG_SCOPE("try punching port %s", port);
 
@@ -355,9 +355,7 @@ namespace elle
             clientlogic.ProcessResponse(spMsg, addrRemote, addrLocal);
           }
           catch (network::TimeOut const&e)
-          {
-            continue;
-          }
+          {}
         }
         StunClientResults results;
         results.Init();

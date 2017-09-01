@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <string>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include <elle/attribute.hh>
 #include <elle/network/Locus.hh>
 #include <elle/reactor/network/udp-socket.hh>
@@ -56,7 +54,7 @@ namespace elle
              int local_port = 0);
       private:
         boost::asio::ip::udp::endpoint
-        _punch(unsigned short port, boost::posix_time::seconds timeout = 10s);
+        _punch(unsigned short port, elle::Duration timeout = 10s);
       };
 
 #if defined(REACTOR_HAVE_STUN)
