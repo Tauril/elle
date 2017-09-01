@@ -3,7 +3,7 @@
 #include <elle/UUID.hh>
 #include <elle/serialization/json.hh>
 
-#include <elle/date/date.hh>
+#include <elle/date/date.h>
 #include <elle/das/model.hh>
 #include <elle/das/serializer.hh>
 #include <elle/das/printer.hh>
