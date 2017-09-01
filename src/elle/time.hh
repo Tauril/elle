@@ -2,8 +2,10 @@
 
 #include <chrono>
 
-#include <elle/windows.hh>
 #include <boost/date_time/posix_time/posix_time.hpp>
+
+#include <elle/date/date.h>
+#include <elle/windows.hh>
 
 namespace elle
 {
@@ -50,4 +52,16 @@ namespace elle
   /// "20170831T130241" as boost::to_iso_string does.
   std::string
   to_iso8601(boost::posix_time::ptime const& t);
+
+  /// Convert to ISO 8601, i.e., "2017-08-31T13:02:41.123456".
+  template <typename Clock, typename Duration = typename Clock::duration>
+  std::string
+  to_iso8601(std::chrono::time_point<Clock, Duration> const& t)
+  {
+    // Note that date::format works only with system_clock, not with
+    // steady_clock.  The latter needs tz support to be printed, which
+    // requires the use of H. Hinnant's tz lib, which we avoided so
+    // far.  See log/TextLogger for an alternative if needed.
+    return date::format("%FT%T", t);
+  }
 }
