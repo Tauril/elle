@@ -387,7 +387,7 @@ namespace elle
           ELLE_DEBUG("accept first proposal for version %s", p.version);
           this->_state.reset();
           this->_state.emplace(std::move(p));
-          return Response(boost::none, boost::none, false);
+          return {};
         }
         else
         {
@@ -401,7 +401,7 @@ namespace elle
                               this->_state->accepted->value,
                               this->_state->accepted->confirmed);
             else
-              return Response(boost::none, boost::none, false);
+              return {};
           }
           else if (this->_state->accepted)
             return Response(
@@ -409,7 +409,7 @@ namespace elle
               this->_state->accepted->value,
               this->_state->accepted->confirmed);
           else
-            return Response(this->_state->proposal, boost::none, false);
+            return Response(this->_state->proposal);
         }
       }
 

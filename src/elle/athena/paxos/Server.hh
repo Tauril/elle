@@ -66,16 +66,14 @@ namespace elle
           Version version;
           int round;
           ClientId sender;
-          /// Check if this proposal is equal to @a given one.
+          /// Whether this proposal is equal to another.
           ///
           /// @param rhs Another proposal.
-          /// @returns Whether proposals are equal.
           bool
           operator ==(Proposal const& rhs) const;
-          /// Check if this proposal is lesser than @a given one.
+          /// Whether this proposal is less than another.
           ///
           /// @param rhs Another proposal.
-          /// @returns Whether this proposal is lesser than the given proposal.
           bool
           operator <(Proposal const& rhs) const;
           /// (De)Serialize a Proposal.
@@ -84,11 +82,10 @@ namespace elle
           using serialization_tag = elle::serialization_tag;
           friend
           std::ostream&
-          operator <<(std::ostream& output,
-                      typename Server<T, Version, ClientId>::Proposal const& p)
+          operator <<(std::ostream& o, Proposal const& p)
           {
-            elle::fprintf(output, "%f:%f:%f", p.version, p.round, p.sender);
-            return output;
+            elle::fprintf(o, "%f:%f:%f", p.version, p.round, p.sender);
+            return o;
           }
         };
 
@@ -101,10 +98,10 @@ namespace elle
         {
           /// Deserialize an Accepted proposal.
           Accepted(elle::serialization::SerializerIn& s, elle::Version const& v);
-          /// Construct a Accepted from @a proposal and @a value.
+          /// Construct an Accepted from @a proposal and @a value.
           ///
-          /// @param proposal The proposal accepted.
-          /// @param value The value agreed.
+          /// @param proposal The accepted proposal.
+          /// @param value    The value agreed.
           /// @param confirmed Whether the acceptation is confirmed.
           Accepted(Proposal proposal, Value value, bool confirmed);
           Proposal proposal;
@@ -217,9 +214,9 @@ namespace elle
         class Response
         {
         public:
-          Response(boost::optional<Proposal> proposal,
-                   boost::optional<Value> value,
-                   bool confirmed)
+          Response(boost::optional<Proposal> proposal = {},
+                   boost::optional<Value> value = {},
+                   bool confirmed = false)
             : _proposal(std::move(proposal))
             , _value(std::move(value))
             , _confirmed(confirmed)
@@ -235,9 +232,8 @@ namespace elle
           {
             auto lhs_valued = bool(lhs.value());
             auto rhs_valued = bool(rhs.value());
-            return
-              std::tie(lhs_valued, lhs._confirmed, lhs._proposal) <
-              std::tie(rhs_valued, rhs._confirmed, rhs._proposal);
+            return std::tie(lhs_valued, lhs._confirmed, lhs._proposal)
+              < std::tie(rhs_valued, rhs._confirmed, rhs._proposal);
           }
 
           using Model = das::Model<
@@ -246,10 +242,9 @@ namespace elle
                                       paxos::value,
                                       paxos::confirmed))>;
         };
-        /// Propose @a Proposal to @a Quorum.
+        /// Submit a Proposal to a Quorum.
         ///
         /// If the Proposal is already outdated, return the newest Proposal.
-        ///
         Response
         propose(Quorum q, Proposal p);
         Proposal

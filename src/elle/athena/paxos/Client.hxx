@@ -157,7 +157,7 @@ namespace elle
         Quorum q;
         for (auto const& peer: this->_peers)
           q.insert(peer->id());
-        ELLE_DUMP("quorum: %s", q);
+        ELLE_DUMP("quorum: %f", q);
         boost::optional<Value> replace;
         while (true)
         {
@@ -371,7 +371,7 @@ namespace elle
         Quorum q;
         for (auto const& peer: this->_peers)
           q.insert(peer->id());
-        ELLE_DUMP("quorum: %s", q);
+        ELLE_DUMP("quorum: %f", q);
         auto reached = 0;
         boost::optional<typename Client::Accepted> res;
         boost::optional<typename Server::WrongQuorum> wrong_quorum;
