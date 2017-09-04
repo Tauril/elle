@@ -54,14 +54,11 @@ namespace elle
   to_iso8601(boost::posix_time::ptime const& t);
 
   /// Convert to ISO 8601, i.e., "2017-08-31T13:02:41.123456".
-  template <typename Clock, typename Duration = typename Clock::duration>
+  /// Prints as universal time.
   std::string
-  to_iso8601(std::chrono::time_point<Clock, Duration> const& t)
-  {
-    // Note that date::format works only with system_clock, not with
-    // steady_clock.  The latter needs tz support to be printed, which
-    // requires the use of H. Hinnant's tz lib, which we avoided so
-    // far.  See log/TextLogger for an alternative if needed.
-    return date::format("%FT%T", date::floor<std::chrono::microseconds>(t));
-  }
+  to_iso8601(std::chrono::system_clock::time_point const& t);
+
+  /// Convert to ISO 8601, local time (not universal).
+  std::string
+  to_iso8601_local(std::chrono::system_clock::time_point const& t);
 }
