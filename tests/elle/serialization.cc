@@ -1516,7 +1516,7 @@ context()
       serializer.serialize_forward(source);
     }
     typename Format::SerializerIn serializer(stream, false);
-    serializer.template set_context<std::string>("yes"s);
+    serializer.template set_context<std::string>("yes");
     auto ctx = Context(serializer);
     BOOST_CHECK_EQUAL(ctx.msg(), source.msg());
     BOOST_CHECK_EQUAL(ctx.ctx(), "yes");
