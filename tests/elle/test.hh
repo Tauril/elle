@@ -63,6 +63,7 @@ namespace
   namespace _detail
   {
     // A timestamp, printable with elle::print.
+    ELLE_COMPILER_ATTRIBUTE_MAYBE_UNUSED
     auto
     now()
     {
