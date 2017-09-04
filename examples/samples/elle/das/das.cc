@@ -32,13 +32,16 @@
 */
 
 // Declare symbols (Symbol_*) needed by the Record::Model.
-ELLE_DAS_SYMBOL(title);
-ELLE_DAS_SYMBOL(artist);
-ELLE_DAS_SYMBOL(id);
-ELLE_DAS_SYMBOL(release_date);
-ELLE_DAS_SYMBOL(tags);
+namespace s
+{
+  ELLE_DAS_SYMBOL(title);
+  ELLE_DAS_SYMBOL(artist);
+  ELLE_DAS_SYMBOL(id);
+  ELLE_DAS_SYMBOL(release_date);
+  ELLE_DAS_SYMBOL(tags);
+}
 
-using TimePoint = std::system_clock::time_point;
+using TimePoint = std::chrono::system_clock::time_point;
 
 /// Declare a Record class with
 struct Record
@@ -52,11 +55,11 @@ struct Record
   // The Model can be declared in the class.
   using Model =
     elle::das::Model<Record,
-                     decltype(elle::meta::list(title,
-                                               artist,
-                                               id,
-                                               release_date,
-                                               tags));
+                     decltype(elle::meta::list(s::title,
+                                               s::artist,
+                                               s::id,
+                                               s::release_date,
+                                               s::tags))>;
 };
 
 struct Records
@@ -68,10 +71,13 @@ struct Records
 // The Model alse can be declared outside the class but will require
 // ELLE_DAS_MODEL_DEFAULT to define the default model for the class (this
 // implies that you can more than one model per class).
-ELLE_DAS_SYMBOL(label);
-ELLE_DAS_SYMBOL(records);
+namespace s
+{
+  ELLE_DAS_SYMBOL(label);
+  ELLE_DAS_SYMBOL(records);
+}
 using DasRecords =
-  elle::das::Model<Records, decltype(elle::meta::list(label, records));
+  elle::das::Model<Records, decltype(elle::meta::list(s::label, s::records))>;
 ELLE_DAS_MODEL_DEFAULT(Records, DasRecords);
 
 // Make all class::Model printable.
@@ -97,7 +103,7 @@ main()
       {
         "Never Gonna Give You Up", "Rick Astley",
         elle::UUID("1549b8a6-6cd7-453e-83de-49f3dc6b0e85"),
-        sys_days(1987_y/jan/1},
+        sys_days{1987_y/jan/1},
         {"'80s Pop"}
       }
     }
