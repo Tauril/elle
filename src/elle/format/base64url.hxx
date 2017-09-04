@@ -1,7 +1,4 @@
-#ifndef ELLE_FORMAT_BASE64URL_HXX
-# define ELLE_FORMAT_BASE64URL_HXX
-
-# include <elle/log.hh>
+#include <elle/log.hh>
 
 namespace elle
 {
@@ -50,7 +47,7 @@ namespace elle
         ELLE_TRACE_SCOPE("decode %s", input);
         size_t size = base64::decoded_size(input);
         ELLE_DEBUG("previsional size: %s", size);
-        Buffer res(size);
+        auto res = Buffer(size);
         IOStream stream(input.istreambuf());
         Stream base64_stream(stream);
         base64_stream.read(reinterpret_cast<char*>(res.mutable_contents()),
@@ -63,11 +60,9 @@ namespace elle
       Buffer
       decode(std::string const& input)
       {
-        ConstWeakBuffer buffer(input.c_str(), input.size());
-        return decode(buffer);
+        auto buf = ConstWeakBuffer(input.c_str(), input.size());
+        return decode(buf);
       }
     }
   }
 }
-
-#endif

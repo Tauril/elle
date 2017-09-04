@@ -1,8 +1,7 @@
-#ifndef ELLE_FORMAT_BASE64URL_HH
-# define ELLE_FORMAT_BASE64URL_HH
+#pragma once
 
-# include <elle/Buffer.hh>
-# include <elle/format/base64.hh>
+#include <elle/Buffer.hh>
+#include <elle/format/base64.hh>
 
 namespace elle
 {
@@ -12,8 +11,8 @@ namespace elle
     {
       class StreamBuffer;
 
-      class ELLE_API Stream:
-        public elle::IOStream
+      class ELLE_API Stream
+        : public elle::IOStream
       {
       public:
         Stream(std::iostream& underlying);
@@ -30,6 +29,7 @@ namespace elle
       template <typename T = Buffer>
       T
       encode(ConstWeakBuffer input);
+
       /// Decode from base64url.
       template <typename T = ConstWeakBuffer>
       Buffer
@@ -38,6 +38,4 @@ namespace elle
   }
 }
 
-# include <elle/format/base64url.hxx>
-
-#endif
+#include <elle/format/base64url.hxx>
