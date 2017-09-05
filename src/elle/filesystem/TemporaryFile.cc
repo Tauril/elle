@@ -5,9 +5,8 @@ namespace elle
   namespace filesystem
   {
     TemporaryFile::TemporaryFile(std::string const& name)
-      : _directory(name)
+      : _path{_directory.path() / name}
     {
-      this->_path = this->_directory.path() / name;
       // Check that it is ok.
       fs::ofstream(this->_path);
     }
