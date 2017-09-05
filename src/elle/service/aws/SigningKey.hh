@@ -2,8 +2,6 @@
 
 #include <string>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include <elle/attribute.hh>
 #include <elle/Printable.hh>
 #include <elle/Buffer.hh>
@@ -16,8 +14,8 @@ namespace elle
   {
     namespace aws
     {
-      class SigningKey:
-        public elle::Printable
+      class SigningKey
+        : public elle::Printable
       {
         /*-------------.
         | Construction |
@@ -37,9 +35,8 @@ namespace elle
         | Printable |
         `----------*/
       public:
-        virtual
         void
-        print(std::ostream& stream) const;
+        print(std::ostream& stream) const override;
       };
     }
   }

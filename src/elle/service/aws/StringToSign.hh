@@ -2,8 +2,6 @@
 
 #include <string>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include <elle/attribute.hh>
 #include <elle/Printable.hh>
 #include <elle/service/aws/Keys.hh>
