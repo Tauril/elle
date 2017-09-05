@@ -20,8 +20,9 @@ void
 no_model()
 {
   NoModel o;
-  BOOST_CHECK_EQUAL(elle::sprintf("%s", o),
-                    elle::sprintf("NoModel(%x)", (void*)&o));
+  auto const ref = elle::sprintf("NoModel(%x)", (void*)&o);
+  BOOST_TEST(elle::sprintf("%s", o) == ref);
+  BOOST_TEST(elle::print("%s", o) == ref);
 }
 
 struct BuiltinModel
@@ -35,7 +36,9 @@ void
 builtin_model()
 {
   BuiltinModel o{1, 2};
-  BOOST_CHECK_EQUAL(elle::sprintf("%s", o), "BuiltinModel(foo = 1, bar = 2)");
+  auto const ref = "BuiltinModel(foo = 1, bar = 2)";
+  BOOST_TEST(elle::sprintf("%s", o) == ref);
+  BOOST_TEST(elle::print("%s", o) == ref);
 }
 
 struct ExternalModel
@@ -51,7 +54,9 @@ void
 external_model()
 {
   ExternalModel o{3, 4};
-  BOOST_CHECK_EQUAL(elle::sprintf("%s", o), "ExternalModel(foo = 3, bar = 4)");
+  auto const ref = "ExternalModel(foo = 3, bar = 4)";
+  BOOST_TEST(elle::sprintf("%s", o) == ref);
+  BOOST_TEST(elle::print("%s", o) == ref);
 }
 
 ELLE_TEST_SUITE()
