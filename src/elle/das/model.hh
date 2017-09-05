@@ -14,9 +14,9 @@ namespace elle
     /// The model declares symbols associated with a given struct, so Das can
     /// perform introspection.
     ///
-    /// \code{.cc}
+    /// @code{.cc}
     ///
-    /// namespace symbs
+    /// namespace symbol
     /// {
     ///   ELLE_DAS_SYMBOL(i);
     ///   ELLE_DAS_SYMBOL(s);
@@ -31,17 +31,17 @@ namespace elle
     ///
     ///   using Model = elle::das::Model<
     ///     Foo,
-    ///     decltype(elle::meta::list(symbs::i,
-    ///                               symbs::s,
-    ///                               symbs::b))>;
+    ///     decltype(elle::meta::list(symbol::i,
+    ///                               symbol::s,
+    ///                               symbol::b))>;
     /// };
     ///
     /// // You can also use the non-intrusive way.
     /// // using FooModel = elle::das::Model<
     /// //   Foo,
-    /// //   decltype(elle::meta::list(symbs::i,
-    /// //                             symbs::s,
-    /// //                             symbs::b))>;
+    /// //   decltype(elle::meta::list(symbol::i,
+    /// //                             symbol::s,
+    /// //                             symbol::b))>;
     /// // ELLE_DAS_MODEL_DEFAULT(Foo, FooModel);
     ///
     /// auto f = Foo{};
@@ -63,7 +63,7 @@ namespace elle
     ///   assert(output.str() == "Foo(i = 0, s = "", b = false)");
     /// }
     ///
-    /// \endcode
+    /// @endcode
     template <typename T, typename Fields_>
     class Model
     {
