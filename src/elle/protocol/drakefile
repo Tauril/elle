@@ -16,7 +16,8 @@ rule_install = None
 rule_tests = None
 rule_examples = None
 
-def configure(cryptography,
+def configure(static,
+              cryptography,
               elle,
               reactor,
               cxx_toolkit = None,
@@ -93,12 +94,12 @@ def configure(cryptography,
   # Build
   global rule_build
   rule_build = drake.Rule('build')
-  rule_build << lib_static
-  if cxx_toolkit.os not in [drake.os.ios, drake.os.android]:
+  if static:
+    rule_build << lib_static
+    library = lib_static
+  else:
     rule_build << lib_dynamic
     library = lib_dynamic
-  else:
-    library = lib_static
 
   ## ----- ##
   ## Tests ##

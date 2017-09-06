@@ -76,7 +76,8 @@ def configure(cxx_toolkit = None,
               build_openssl_eay = False,
               cryptography_python = True,
               codesign = False,
-  ):
+              static = False,
+):
 
   global athena
   global aws
@@ -252,31 +253,32 @@ def configure(cxx_toolkit = None,
   if windows:
     # XXX only for mingw
     zlib_makefile = 'win32/Makefile.gcc'
-    zlib_lib = drake.cxx.StaticLib('zlib/lib/libz.a')
     zlib_configure_call = None
-    zlib_configure_args = ['--static']
   else:
     zlib_env['CC'] = cxx_toolkit.c
     zlib_env['CFLAGS'] = '-fPIC -w'
     zlib_makefile = None
     zlib_configure_call = zlib_configure
-    zlib_configure_args = []
-    if cxx_toolkit.os is drake.os.macos:
-      zlib_lib = drake.cxx.DynLib('zlib/lib/libz.%s.dylib' % zlib_version)
-    elif cxx_toolkit.os in [drake.os.linux]:
-      zlib_lib = drake.cxx.DynLib('zlib/lib/libz.so.1')
-    elif cxx_toolkit.os is drake.os.android:
-      zlib_lib = drake.cxx.StaticLib('zlib/lib/libz.a')
-      zlib_configure_args = ['--static']
-    elif cxx_toolkit.os is drake.os.ios:
-      zlib_lib = drake.cxx.StaticLib('zlib/lib/libz.a')
-      zlib_arch_str = ''
-      for arch in archs:
-        zlib_arch_str += '-arch %s ' % arch
-      zlib_env['CC'] += ' %s -mios-version-min=7.0' % (zlib_arch_str)
-      zlib_env['SDKROOT'] = os.environ['SDKROOT']
-      zlib_env['CFLAGS'] += ' -isysroot %s' % os.environ['SDKROOT']
-  zlib_libs = [zlib_lib,]
+  zlib_configure_args = []
+  if static:
+    zlib_configure_args.append('--static')
+    zlib_lib = drake.cxx.StaticLib('zlib/lib/libz.a')
+  elif cxx_toolkit.os is drake.os.macos:
+    zlib_lib = drake.cxx.DynLib('zlib/lib/libz.%s.dylib' % zlib_version)
+  elif cxx_toolkit.os in [drake.os.linux]:
+    zlib_lib = drake.cxx.DynLib('zlib/lib/libz.so.1')
+  elif cxx_toolkit.os is drake.os.android:
+    zlib_lib = drake.cxx.StaticLib('zlib/lib/libz.a')
+    zlib_configure_args.append('--static')
+  elif cxx_toolkit.os is drake.os.ios:
+    zlib_lib = drake.cxx.StaticLib('zlib/lib/libz.a')
+    zlib_arch_str = ''
+    for arch in archs:
+      zlib_arch_str += '-arch %s ' % arch
+    zlib_env['CC'] += ' %s -mios-version-min=7.0' % (zlib_arch_str)
+    zlib_env['SDKROOT'] = os.environ['SDKROOT']
+    zlib_env['CFLAGS'] += ' -isysroot %s' % os.environ['SDKROOT']
+  zlib_libs = [zlib_lib]
 
   zlib_prefix_absolute = drake.path_build(zlib_prefix,
                                           absolute = True)
@@ -413,21 +415,21 @@ def configure(cxx_toolkit = None,
   # alike so that our GNUBuilder can be used.
   openssl_configure = drake.node(openssl_build / 'Configure')
   from drake.cxx import DynLib, StaticLib
-  openssl_shared = True
+  openssl_shared = not static and cxx_toolkit.os not in [
+    drake.os.windows, drake.os.ios, drake.os.android]
   openssl_env = {
     'CC': cxx_toolkit.c + ' -w',
     'PERL': 'perl',
   }
-  if cxx_toolkit.os in [drake.os.linux]:
+  if not openssl_shared:
+    openssl_lib_ssl = StaticLib(openssl_prefix / 'lib/libssl.a')
+    openssl_lib_crypto = StaticLib(openssl_prefix / 'lib/libcrypto.a')
+  elif cxx_toolkit.os in [drake.os.linux]:
     openssl_lib_ssl = DynLib(openssl_prefix / 'lib/libssl.so.1.0.0')
     openssl_lib_crypto = DynLib(openssl_prefix / 'lib/libcrypto.so.1.0.0')
   elif cxx_toolkit.os is drake.os.macos:
     openssl_lib_ssl = DynLib(openssl_prefix / 'lib/libssl.1.0.0.dylib')
     openssl_lib_crypto = DynLib(openssl_prefix / 'lib/libcrypto.1.0.0.dylib')
-  elif cxx_toolkit.os in [drake.os.windows, drake.os.ios, drake.os.android]:
-    openssl_lib_ssl = StaticLib(openssl_prefix / 'lib/libssl.a')
-    openssl_lib_crypto = StaticLib(openssl_prefix / 'lib/libcrypto.a')
-    openssl_shared = False
   openssl_libs = [openssl_lib_ssl, openssl_lib_crypto]
   openssl_prefix_absolute = \
     drake.path_build(openssl_prefix, absolute = True)
@@ -468,7 +470,7 @@ def configure(cxx_toolkit = None,
         targets = [crypto_arch_lib, ssl_arch_lib],
         configure_args = [
           '--prefix=%s' % drake.path_build(openssl_arch_prefix, absolute = True),
-          openssl_shared and 'shared' or 'no-shared',
+          'shared' if openssl_shared else 'no-shared',
           '-DPURIFY',
           os_string,
         ],
@@ -495,6 +497,7 @@ def configure(cxx_toolkit = None,
           '--prefix=%s' % openssl_prefix_absolute,
           sharing_model,
           '-DPURIFY',
+          'no-dynamic-engine',
           os_string,
         ],
         build_args = [
@@ -506,7 +509,7 @@ def configure(cxx_toolkit = None,
       targets = chain(
         openssl_libs,
         (drake.node(openssl_prefix / p) for p in openssl_headers)),
-      sharing_model = openssl_shared and 'shared' or 'no-shared')
+      sharing_model = 'shared' if openssl_shared else 'no-shared')
     if build_openssl_eay and windows:
       names = ['bin/libeay32.dll', 'bin/ssleay32.dll', 'lib/libssl.dll.a', 'lib/libcrypto.dll.a']
       openssl_libs_eay = [DynLib(openssl_prefix / name) for name in names]
@@ -518,6 +521,9 @@ def configure(cxx_toolkit = None,
   openssl_rule << openssl_libs
   openssl_config = drake.cxx.Config()
   openssl_config.add_local_include_path(openssl_prefix / 'include')
+  if static:
+    # OpenSSL depends on libdl, no matter whether it's static or not.
+    openssl_config.lib('dl')
 
   ## ---- ##
   ## Curl ##
@@ -540,18 +546,26 @@ def configure(cxx_toolkit = None,
   )
   curl_configure = drake.node(curl_build / 'configure')
   from drake.cxx import DynLib, StaticLib
-  if cxx_toolkit.os is drake.os.linux:
+  curl_shared = not static and cxx_toolkit.os not in [
+    drake.os.windows, drake.os.ios, drake.os.android]
+  if not curl_shared:
+    curl_lib = StaticLib(curl_prefix / 'lib/libcurl.a')
+  elif cxx_toolkit.os is drake.os.linux:
     curl_lib = DynLib(curl_prefix / 'lib/libcurl.so.4')
   elif cxx_toolkit.os is drake.os.macos:
     curl_lib = DynLib(curl_prefix / 'lib/libcurl.4.dylib')
-  elif cxx_toolkit.os in [drake.os.windows, drake.os.ios, drake.os.android]:
-    curl_lib = StaticLib(curl_prefix / 'lib/libcurl.a')
   else:
     raise Exception('Unknown OS')
-  curl_openssl_libs = drake.copy(openssl_libs, curl_prefix / 'lib',
-                                 strip_prefix = True)
-  curl_zlib_libs = drake.copy(zlib_libs, curl_prefix / 'lib',
-                              strip_prefix = True)
+  if static:
+    curl_openssl_libs = openssl_libs
+  else:
+    curl_openssl_libs = drake.copy(openssl_libs, curl_prefix / 'lib',
+                                   strip_prefix = True)
+  if static:
+    curl_zlib_libs = zlib_libs
+  else:
+    curl_zlib_libs = drake.copy(zlib_libs, curl_prefix / 'lib',
+                                strip_prefix = True)
   curl_configure_args = [
     '--with-ssl=%s' % drake.path_build(openssl_prefix,
                                        absolute = True),
@@ -570,6 +584,7 @@ def configure(cxx_toolkit = None,
     '--disable-rtsp',
     '--with-gssapi',
     '--without-libidn',
+    '--without-libssh2',
   ]
   if cxx_toolkit.os is not drake.os.ios:
     curl_configure_args.append(
@@ -596,6 +611,8 @@ def configure(cxx_toolkit = None,
     # end up using the system's copy instead ours.
     'PKG_CONFIG_PATH': str(drake.path_build(zlib_prefix, absolute = True) / 'lib' / 'pkgconfig'),
   }
+  if static:
+    curl_env.update({'LIBS': '-ldl'})
   if cxx_toolkit.architecture is drake.architecture.arm:
     curl_configure_args.append('--host=%s' % cxx_toolkit.cxx[:-4])
   else:
@@ -662,8 +679,6 @@ def configure(cxx_toolkit = None,
       build_args = ['all', 'install',],
       additional_env = curl_env,
     )
-  for lib in curl_dependency_libs:
-    curl_lib.dependency_add(lib)
   curl_config = drake.cxx.Config()
   curl_config.add_local_include_path(curl_prefix / 'include')
   if windows:
@@ -721,22 +736,17 @@ def configure(cxx_toolkit = None,
     '--without-xml2',
   ]
   if windows:
-    libarchive_lib = drake.cxx.StaticLib(libarchive_prefix / 'lib/libarchive.a')
     bsdcpio = drake.cxx.Executable('libarchive/bin/bsdcpio.exe')
     bsdtar = drake.cxx.Executable('libarchive/bin/bsdtar.exe')
-    libarchive_configure_args += ['--disable-shared']
-    libarchive_configure_args += ['--host=%s' % cxx_toolkit.prefix[:-1]]
-  elif cxx_toolkit.os is drake.os.ios:
-    bsdcpio = drake.cxx.Executable('libarchive/bin/bsdcpio')
-    bsdtar = drake.cxx.Executable('libarchive/bin/bsdtar')
-    libarchive_lib = drake.cxx.StaticLib(libarchive_prefix / 'lib/libarchive.a')
-  elif cxx_toolkit.os is drake.os.android:
-    bsdcpio = drake.cxx.Executable('libarchive/bin/bsdcpio')
-    bsdtar = drake.cxx.Executable('libarchive/bin/bsdtar')
-    libarchive_lib = drake.cxx.StaticLib(libarchive_prefix / 'lib/libarchive.a')
+    libarchive_configure_args.append(
+      '--host=%s' % cxx_toolkit.prefix[:-1])
   else:
     bsdcpio = drake.cxx.Executable('libarchive/bin/bsdcpio')
     bsdtar = drake.cxx.Executable('libarchive/bin/bsdtar')
+  if static:
+    libarchive_lib = drake.cxx.StaticLib(libarchive_prefix / 'lib/libarchive.a')
+    libarchive_configure_args.append('--disable-shared')
+  else:
     libarchive_preload = ':'.join(str(drake.path_root() / n.path())
                                   for n in libarchive_dependency_libs)
     if cxx_toolkit.os is drake.os.macos:
@@ -749,7 +759,6 @@ def configure(cxx_toolkit = None,
     libarchive_lib = drake.cxx.DynLib(libarchive_prefix / libarchive_lib)
   if cxx_toolkit.architecture is drake.architecture.arm:
     libarchive_configure_args += ['--host=%s' % cxx_toolkit.cxx[:-4]]
-
   libarchive_prefix_absolute = drake.path_build(libarchive_prefix,
                                                 absolute = True)
   if cxx_toolkit.os is not drake.os.ios:
@@ -817,7 +826,7 @@ def configure(cxx_toolkit = None,
   ## Boost ##
   ## ----- ##
 
-  boost_static = cxx_toolkit.os in [drake.os.ios]
+  boost_static = static or cxx_toolkit.os in [drake.os.ios]
   boost_version = drake.Version(1, 60, 0)
   if boost is not None:
     boost = drake.cxx.boost.Boost(
@@ -1293,6 +1302,7 @@ using python : %(python_version)s : %(python_prefix)s/%(python_bin)s : %(python_
 
   elle = drake.include(
     'src/elle',
+    static = static,
     cxx_toolkit = cxx_toolkit,
     cxx_config = cxx_config,
     zlib_config = zlib_config,
@@ -1311,6 +1321,7 @@ using python : %(python_version)s : %(python_prefix)s/%(python_bin)s : %(python_
   )
   cryptography = drake.include(
     'src/elle/cryptography',
+    static = static,
     cxx_toolkit = cxx_toolkit,
     cxx_config = cxx_config,
     openssl_config = openssl_config,
@@ -1324,7 +1335,8 @@ using python : %(python_version)s : %(python_prefix)s/%(python_bin)s : %(python_
     valgrind_tests = valgrind_tests,
     python = python3,
     # XXX: Fix the python binding on Windows.
-    build_python_module = cryptography_python and not windows,
+    build_python_module =
+      cryptography_python and not windows and not static,
   )
   das = drake.include(
     'src/elle/das',
@@ -1338,6 +1350,7 @@ using python : %(python_version)s : %(python_prefix)s/%(python_bin)s : %(python_
   )
   reactor = drake.include(
     'src/elle/reactor',
+    static = static,
     zlib_config = zlib_config,
     zlib_lib = zlib_lib,
     curl_config = curl_config,
@@ -1360,6 +1373,7 @@ using python : %(python_version)s : %(python_prefix)s/%(python_bin)s : %(python_
   )
   athena = drake.include(
     'src/elle/athena',
+    static = static,
     cxx_toolkit = cxx_toolkit,
     cxx_config = cxx_config,
     elle = elle,
@@ -1373,6 +1387,7 @@ using python : %(python_version)s : %(python_prefix)s/%(python_bin)s : %(python_
   )
   dropbox = drake.include(
     'src/elle/service/dropbox',
+    static = static,
     cxx_toolkit = cxx_toolkit,
     cxx_config = cxx_config,
     elle = elle,
@@ -1385,6 +1400,7 @@ using python : %(python_version)s : %(python_prefix)s/%(python_bin)s : %(python_
   )
   protocol = drake.include(
     'src/elle/protocol',
+    static = static,
     cxx_toolkit = cxx_toolkit,
     cxx_config = cxx_config,
     boost = boost,
@@ -1397,6 +1413,7 @@ using python : %(python_version)s : %(python_prefix)s/%(python_bin)s : %(python_
   )
   aws = drake.include(
     'src/elle/service/aws',
+    static = static,
     cxx_toolkit = cxx_toolkit,
     cxx_config = cxx_config,
     boost = boost,

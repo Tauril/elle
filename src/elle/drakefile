@@ -27,7 +27,8 @@ python_plugin_datetime = None
 with open(str(drake.path_source('../../drake-utils.py')), 'r') as f:
   exec(f.read(), globals(), globals())
 
-def configure(zlib_lib,
+def configure(static,
+              zlib_lib,
               zlib_config,
               libarchive_lib,
               libarchive_config,
@@ -464,7 +465,7 @@ def configure(zlib_lib,
 
   lib_static = drake.cxx.StaticLib(
     lib_path + '/elle_core',
-    sources + [zlib_lib, libarchive_lib],
+    sources + [zlib_lib, libarchive_lib] + openssl_libs,
     cxx_toolkit,
     cxx_config_libs,
   )
@@ -476,12 +477,12 @@ def configure(zlib_lib,
   )
 
   rule_build = drake.Rule('build')
-  rule_build << lib_static
-  if cxx_toolkit.os not in [drake.os.ios, drake.os.android]:
+  if static:
+    rule_build << lib_static
+    library = lib_static
+  else:
     rule_build << lib_dynamic
     library = lib_dynamic
-  else:
-    library = lib_static
 
   ## ------ ##
   ## Python ##
@@ -519,18 +520,19 @@ def configure(zlib_lib,
     python += drake.copy(python_sources, lib_path + '/python', 'src')
     python_rule << python
 
-    if cxx_toolkit.os is drake.os.windows:
-      python_plugin_datetime = drake.cxx.StaticLib(
-        lib_path + '/python-datetime-bindings',
-        drake.nodes('python/datetime-converter.cc'),
-        cxx_toolkit,
-        python_cxx_config)
-    else:
-      python_plugin_datetime = drake.cxx.Module(
-        lib_path + '/python-datetime-bindings',
-        drake.nodes('python/datetime-converter.cc'),
-        cxx_toolkit,
-        python_cxx_config)
+    if not static:
+      if cxx_toolkit.os is drake.os.windows:
+        python_plugin_datetime = drake.cxx.StaticLib(
+          lib_path + '/python-datetime-bindings',
+          drake.nodes('python/datetime-converter.cc'),
+          cxx_toolkit,
+          python_cxx_config)
+      else:
+        python_plugin_datetime = drake.cxx.Module(
+          lib_path + '/python-datetime-bindings',
+          drake.nodes('python/datetime-converter.cc'),
+          cxx_toolkit,
+          python_cxx_config)
 
   ## ----- ##
   ## Tests ##
@@ -696,7 +698,7 @@ def configure(zlib_lib,
     rule_examples << example
     runner = drake.Runner(exe = example, env = examples_env)
     runner.reporting = drake.Runner.Reporting.on_failure
-    rule_examples << runner.status
+    rule_check << runner.status
   rule_build << rule_examples
 
   ## ------- ##

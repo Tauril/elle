@@ -28,7 +28,8 @@ rule_examples = None
 with open(str(drake.path_source('../../../drake-utils.py')), 'r') as f:
   exec(f.read(), globals(), globals())
 
-def configure(curl_config,
+def configure(static,
+              curl_config,
               curl_lib,
               zlib_config,
               zlib_lib,
@@ -309,7 +310,6 @@ def configure(curl_config,
         drake.node('fuse/%s/configure' % fuse_basename)
       fuse_prefix = drake.path_build('fuse')
       fuse_prefix_absolute = drake.path_root() / fuse_prefix
-      fuse_lib =  drake.cxx.DynLib('fuse/lib/libfuse.so.2')
       drake.HTTPDownload(fuse_url, fuse_tarball,
                          fingerprint='ecb712b5ffc6dffd54f4a405c9b372d8')
       drake.TarballExtractor(
@@ -323,6 +323,18 @@ def configure(curl_config,
       extra_args = []
       if cxx_toolkit.architecture is drake.architecture.arm:
         extra_args += ['--host', cxx_toolkit.cxx[:-4]]
+      if static:
+        fuse_lib = drake.cxx.StaticLib('fuse/lib/libfuse.a')
+        extra_args += [
+          '--enable-static',
+          '--disable-shared',
+        ]
+      else:
+        fuse_lib =  drake.cxx.DynLib('fuse/lib/libfuse.so.2')
+        extra_args += [
+          '--disable-static',
+          '--enable-shared',
+        ]
       GNUBuilder(
         cxx_toolkit,
         configure = fuse_configure,
@@ -332,15 +344,14 @@ def configure(curl_config,
         'CC=%s' % cxx_toolkit.c,
         '--disable-util',
         '--disable-example',
-        '--disable-static',
-        '--enable-shared'
         ] + extra_args,
         targets = [fuse_lib] + fuse_includes,
       )
       fuse_config = drake.cxx.Config()
       fuse_config.add_local_include_path('fuse/include')
       local_cxx_config += fuse_config
-      fuse_lib = drake.copy(fuse_lib, lib_path, strip_prefix = True)
+      if not static:
+        fuse_lib = drake.copy(fuse_lib, lib_path, strip_prefix = True)
     elif cxx_toolkit.os is drake.os.macos:
       osxfuse_version = drake.Version(3, 5, 4)
       osxfuse_base_name = 'osxfuse-%s' % osxfuse_version
@@ -389,10 +400,8 @@ def configure(curl_config,
           import shutil
           shutil.rmtree(self.__mountpoint)
           return True
-
       OSXFUSEExtractor(osxfuse_version, osxfuse_dmg, osxfuse_package)
       fuse_lib = drake.cxx.DynLib('/usr/local/lib/libosxfuse.2.dylib')
-
   elif fuse:
     enable_fuse = True
     fuse_config = drake.cxx.Config()
@@ -402,16 +411,17 @@ def configure(curl_config,
   else:
     enable_fuse = False
 
-
   # Curl
   local_cxx_config += curl_config
   curl_lib = drake.copy(curl_lib, lib_path, strip_prefix = True)
 
   # OpenSSL (for SSL sockets)
   local_cxx_config += openssl_config
-  openssl_libs = drake.copy([openssl_lib_ssl, openssl_lib_crypto],
-                            lib_path, strip_prefix = True)
-
+  if static:
+    openssl_libs = [openssl_lib_ssl, openssl_lib_crypto]
+  else:
+    openssl_libs = drake.copy([openssl_lib_ssl, openssl_lib_crypto],
+                              lib_path, strip_prefix = True)
 
   # Zlib
   local_cxx_config += zlib_config
@@ -578,10 +588,19 @@ def configure(curl_config,
       'network/unix-domain-server.hh',
       'network/unix-domain-socket.cc',
       'network/unix-domain-socket.hh',
+    )
+    # if static:
+    #   fuse_lib.dependency_add(drake.cxx.StaticLib(
+    #     'lib/fuse_extra_lib',
+    #     drake.nodes('pthread.cc', 'pthread.hh'),
+    #     cxx_toolkit,
+    #     local_cxx_config,
+    #   ))
+    # else:
+    sources += drake.nodes(
       'pthread.cc',
       'pthread.hh',
-      )
-
+    )
   sources += drake.nodes(
     'filesystem.cc',
     'filesystem.hh',
@@ -737,7 +756,10 @@ def configure(curl_config,
     lib_static_link_libs.append(backend_boost)
     lib_static_link_libs.append(backend_lib)
   if fuse_lib:
-    lib_dynamic_link_libs.append(fuse_lib)
+    if static:
+      lib_static_link_libs.append(fuse_lib)
+    else:
+      lib_dynamic_link_libs.append(fuse_lib)
   if dokan_lib:
     lib_static_link_libs.append(dokan_lib)
     lib_cxx_config.library_add(
@@ -759,15 +781,19 @@ def configure(curl_config,
   lib_static = drake.cxx.StaticLib(
     lib_path + '/elle_reactor',
     sources + lib_static_link_libs + openssl_libs,
-    cxx_toolkit, lib_cxx_config)
-  rule_build << lib_static
-  if cxx_toolkit.os in [drake.os.ios, drake.os.android]:
+    cxx_toolkit,
+    lib_cxx_config,
+    cyclic_dependencies = True)
+  if static:
     library = lib_static
+    rule_build << lib_static
   else:
     rule_build << lib_dynamic
     library = lib_dynamic
-
-  if python3 is not None and cxx_toolkit.os != drake.os.windows:
+  python_bindings = python3 is not None and \
+                    cxx_toolkit.os != drake.os.windows and \
+                    elle.python_plugin_datetime is not None
+  if python_bindings:
     python_cxx_config = drake.cxx.Config(local_cxx_config)
     python_cxx_config.lib_path_runtime('..')
     python_cxx_config += python3
@@ -924,7 +950,7 @@ def configure(curl_config,
     runner.reporting = drake.Runner.Reporting.on_failure
     rule_check << runner.status
 
-  if python3 is not None and cxx_toolkit.os is not drake.os.windows:
+  if python_bindings:
     python_tests = (
       'python',
       )

@@ -71,7 +71,13 @@ namespace elle
       }
 
     private:
+#ifdef BOOST_THREAD_STATIC_LINK
+      // FIXME: Boost thread 1.59 built statically seem to have bugs on
+      // specific_thread_ptr.
+      std::unique_ptr<int> _indentation;
+#else
       boost::thread_specific_ptr<int> _indentation;
+#endif
     };
 
     int&

@@ -21,7 +21,8 @@ rule_install = None
 rule_tests = None
 rule_examples = None
 
-def configure(openssl_config,
+def configure(static,
+              openssl_config,
               openssl_lib_crypto,
               openssl_lib_ssl,
               cxx_toolkit = None,
@@ -33,13 +34,21 @@ def configure(openssl_config,
               python = None,
               valgrind = None,
               valgrind_tests = False,
-              build_python_module = True,
+              build_python_module = None,
 ):
 
   global config
   global lib_static, lib_dynamic, library, python_module
   global rule_build, rule_install
   global examples
+
+  if build_python_module is None:
+    if static:
+      build_python_module = False
+    else:
+      build_python_module = True
+  elif build_python_module:
+    assert not static
 
   # Toolkit
   cxx_toolkit = cxx_toolkit or drake.cxx.Toolkit()
@@ -95,11 +104,6 @@ def configure(openssl_config,
     boost_thread.library_add(drake.copy(boost.thread_dynamic, lib_path, strip_prefix = True))
     boost_filesystem = drake.cxx.Config(boost.config_filesystem(link = False))
     boost_filesystem.library_add(drake.copy(boost.filesystem_dynamic, lib_path, strip_prefix = True))
-
-  if cxx_toolkit.os in [drake.os.windows, drake.os.ios, drake.os.android]:
-    elle_library = elle.lib_static
-  else:
-    elle_library = elle.lib_dynamic
 
   # Global Configuration
   config = drake.cxx.Config()
@@ -259,12 +263,12 @@ def configure(openssl_config,
   ## ----- ##
 
   rule_build = drake.Rule('build')
-  rule_build << lib_static
-  if cxx_toolkit.os not in [drake.os.ios, drake.os.android]:
+  if static:
+    rule_build << lib_static
+    library = lib_static
+  else:
     rule_build << lib_dynamic
     library = lib_dynamic
-  else:
-    library = lib_static
 
   ## ----------- ##
   ## Executables ##
@@ -329,7 +333,7 @@ def configure(openssl_config,
     link = not boost.prefer_shared)
   use_boost_filesystem_static_library = not boost.prefer_shared or \
                                         cxx_toolkit.os is drake.os.macos
-  test_libs = [library, elle_library]
+  test_libs = [library, elle.library]
   test_libs += openssl_libs
   # XXX: Link only with tests that actually need dopenssl.
   if enable_rotation:
@@ -391,7 +395,7 @@ def configure(openssl_config,
       [
         drake.node('%s/%s.cc' % (examples_path, example)),
         library,
-        elle_library,
+        elle.library,
       ] + openssl_libs,
       cxx_toolkit, exe_cxx_config)
     rule_examples << example

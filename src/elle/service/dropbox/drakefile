@@ -10,7 +10,8 @@ lib_static  = None
 
 config = None
 
-def configure(cxx_toolkit,
+def configure(static,
+              cxx_toolkit,
               cxx_config,
               elle,
               das,
@@ -55,8 +56,10 @@ def configure(cxx_toolkit,
                                    sources,
                                    cxx_toolkit, local_config)
   rule_build = drake.Rule('build')
-  rule_build << lib_dynamic
-  rule_build << lib_static
+  if static:
+    rule_build << lib_static
+  else:
+    rule_build << lib_dynamic
 
   ## ------- ##
   ## Install ##
