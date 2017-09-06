@@ -116,7 +116,7 @@ namespace elle
         catch (reactor::Terminate const&)
         {
           if (!reactor::scheduler().current()->terminating())
-            throw;
+            ELLE_ABORT("%s: SSL shutdown termination", this);
           else
             ELLE_WARN("%s: ignore stacked thread termination during SSL "
                       "shutdown", this);
