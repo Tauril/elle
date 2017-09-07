@@ -136,12 +136,14 @@ def configure(static,
 
   openssl_libs = None
   # Libraries
+  if static:
+    openssl_libs = [openssl_lib_crypto, openssl_lib_ssl]
+  else:
+    openssl_libs = drake.copy([openssl_lib_crypto, openssl_lib_ssl],
+                              lib_path, strip_prefix = True)
   if ldap_libs:
     ldap = True
     ldap_libs = drake.copy(ldap_libs, lib_path, strip_prefix = True)
-    openssl_libs = drake.copy([openssl_lib_crypto, openssl_lib_ssl],
-                             lib_path, strip_prefix = True)
-
     cxx_config += ldap_config
     cxx_config.define('HAVE_LDAP=1')
     config.define('HAVE_LDAP=1')

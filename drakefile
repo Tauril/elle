@@ -260,7 +260,7 @@ def configure(cxx_toolkit = None,
     zlib_makefile = None
     zlib_configure_call = zlib_configure
   zlib_configure_args = []
-  if static:
+  if static or cxx_toolkit.os is drake.os.windows:
     zlib_configure_args.append('--static')
     zlib_lib = drake.cxx.StaticLib('zlib/lib/libz.a')
   elif cxx_toolkit.os is drake.os.macos:
@@ -743,7 +743,7 @@ def configure(cxx_toolkit = None,
   else:
     bsdcpio = drake.cxx.Executable('libarchive/bin/bsdcpio')
     bsdtar = drake.cxx.Executable('libarchive/bin/bsdtar')
-  if static:
+  if static or cxx_toolkit.os is drake.os.windows:
     libarchive_lib = drake.cxx.StaticLib(libarchive_prefix / 'lib/libarchive.a')
     libarchive_configure_args.append('--disable-shared')
   else:
