@@ -819,9 +819,6 @@ namespace __cxxabiv1
       // Always fetch the map to avoid static initialization fiascos.
       CXAThreadMap& map = cxa_thread_map();
       auto sched = elle::reactor::Scheduler::scheduler();
-      elle::reactor::backend::Thread* t = nullptr;
-      if (sched != nullptr)
-        t = sched->manager().current();
       if (sched == nullptr)
       {
         auto &res = map[std::this_thread::get_id()];
@@ -829,13 +826,16 @@ namespace __cxxabiv1
           res.reset(new __cxa_eh_globals());
         return res.get();
       }
-      if (t == nullptr)
+      else if (auto t = sched->manager().current())
+      {
+        auto* ceg = (__cxa_eh_globals*)t->exception_storage();
+        return ceg;
+      }
+      else
       {
         static auto* nullthread_ceg = new __cxa_eh_globals();
         return nullthread_ceg;
       }
-      auto* ceg = (__cxa_eh_globals*)t->exception_storage();
-      return ceg;
     }
 
     __cxa_eh_globals *

@@ -1,7 +1,8 @@
 #pragma once
-/* This file needs to be included exactly once per dll and executable that links with
- * libelle_reactor.dll under windows.
-*/
+
+// This file needs to be included exactly once per dll and executable
+// that links with libelle_reactor.dll under windows.
+
 #ifdef ELLE_WINDOWS
 # include <elle/reactor/libcxx-exceptions/unwind-cxx.h>
 namespace elle
@@ -12,6 +13,7 @@ namespace elle
     cxa_get_globals() throw();
   }
 }
+
 namespace __cxxabiv1
 {
   extern "C"
