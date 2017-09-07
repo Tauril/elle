@@ -5,11 +5,11 @@ namespace elle
   namespace reactor
   {
     /*-------------.
-      | Construction |
-      `-------------*/
+    | Construction |
+    `-------------*/
 
-    Barrier::Barrier(const std::string& name)
-      : Super(name)
+    Barrier::Barrier(std::string name)
+      : Super{std::move(name)}
       , _opened(false)
       , _inverted(*this)
     {}
@@ -20,8 +20,8 @@ namespace elle
     }
 
     /*---------.
-      | Openness |
-      `---------*/
+    | Openness |
+    `---------*/
 
     Barrier::operator bool() const
     {
@@ -29,8 +29,8 @@ namespace elle
     }
 
     /*---------.
-      | Waitable |
-      `---------*/
+    | Waitable |
+    `---------*/
 
     void
     Barrier::open()
@@ -82,8 +82,8 @@ namespace elle
     }
 
     /*----------.
-      | Inversion |
-      `----------*/
+    | Inversion |
+    `----------*/
 
     Barrier::InvertedBarrier&
     Barrier::operator !()
@@ -110,8 +110,8 @@ namespace elle
     }
 
     /*----------.
-      | Printable |
-      `----------*/
+    | Printable |
+    `----------*/
 
     void
     Barrier::print(std::ostream& stream) const

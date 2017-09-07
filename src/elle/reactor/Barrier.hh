@@ -33,8 +33,8 @@ namespace elle
     public:
       /// Create a closed Barrier with the given name.
       ///
-      /// \param name The barrier name, for pretty-printing purpose.
-      Barrier(const std::string& name = std::string());
+      /// @param name The barrier name, for pretty-printing purpose.
+      Barrier(std::string name = {});
       Barrier(Barrier&&) = default;
       ~Barrier();
 
