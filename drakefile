@@ -531,7 +531,7 @@ def configure(cxx_toolkit = None,
   else:
     curl_configure_args.append('--host=%s' % drake.host())
   if cxx_toolkit.os is drake.os.macos:
-    path = drake.path_build(zlib_prefix, absolute = True) / 'lib'
+    path = drake.path_build(zlib.prefix, absolute = True) / 'lib'
     curl_configure_args.append('DYLD_FALLBACK_LIBRARY_PATH=%s' % path)
   elif windows:
     curl_env['LIBS'] = '-lcrypt32 -lgdi32'
