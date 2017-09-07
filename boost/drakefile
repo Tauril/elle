@@ -3,6 +3,8 @@ import os
 
 from itertools import chain
 
+MACOSX_DEPLOYMENT_TARGET = '10.7'
+
 boost = None
 headers = None
 
