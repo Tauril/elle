@@ -47,7 +47,6 @@ namespace elle
       , _current(nullptr)
       , _background_service_work(
            std::make_unique<boost::asio::io_service::work>(this->_background_service))
-      , _background_pool()
       , _background_pool_free(0)
       , _io_service_work(
            std::make_unique<boost::asio::io_service::work>(this->_io_service))
@@ -59,7 +58,6 @@ namespace elle
 # error "REACTOR_CORO_BACKEND not defined"
 #endif
     {
-      this->_eptr = nullptr;
       plugins::logger_indentation.load();
       plugins::logger_tags.load();
 #ifndef ELLE_WINDOWS

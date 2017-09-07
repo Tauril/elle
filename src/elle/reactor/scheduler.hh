@@ -192,7 +192,7 @@ namespace elle
     | Thread Exception Handler |
     `-------------------------*/
     protected:
-      std::exception_ptr _eptr;
+      std::exception_ptr _eptr = nullptr;
 
     /*----------------.
     | Multithread API |
