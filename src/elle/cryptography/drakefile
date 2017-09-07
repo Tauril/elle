@@ -331,8 +331,7 @@ def configure(static,
   config_tests += boost.config_test(
     static = not boost.prefer_shared or None,
     link = not boost.prefer_shared)
-  use_boost_filesystem_static_library = not boost.prefer_shared or \
-                                        cxx_toolkit.os is drake.os.macos
+  use_boost_filesystem_static_library = not boost.prefer_shared
   test_libs = [library, elle.library]
   test_libs += openssl_libs
   # XXX: Link only with tests that actually need dopenssl.

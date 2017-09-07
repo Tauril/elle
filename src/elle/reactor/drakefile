@@ -890,8 +890,7 @@ def configure(static,
   cxx_config_tests += boost.config_timer(
     static = not boost.prefer_shared or None,
     link = not boost.prefer_shared)
-  use_boost_filesystem_static_library = not boost.prefer_shared or \
-                                        cxx_toolkit.os is drake.os.macos
+  use_boost_filesystem_static_library = not boost.prefer_shared
   cxx_config_tests += boost.config_filesystem(
     static = use_boost_filesystem_static_library or None,
     link = use_boost_filesystem_static_library)
