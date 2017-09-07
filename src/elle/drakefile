@@ -28,8 +28,7 @@ with open(str(drake.path_source('../../drake-utils.py')), 'r') as f:
   exec(f.read(), globals(), globals())
 
 def configure(static,
-              zlib_lib,
-              zlib_config,
+              zlib,
               libarchive_lib,
               libarchive_config,
               cxx_toolkit = None,
@@ -46,7 +45,7 @@ def configure(static,
               symbol_visibility = True
             ):
 
-  global config, lib_static, lib_dynamic, library, library_zlib
+  global config, lib_static, lib_dynamic, library
   global python
   global rule_build, rule_check, rule_install, rule_tests, rule_examples
   global python_plugin_datetime
@@ -146,8 +145,11 @@ def configure(static,
     cxx_config.define('HAVE_LDAP=1')
     config.define('HAVE_LDAP=1')
 
-  zlib_lib = drake.copy(zlib_lib, lib_path, strip_prefix = True)
-  cxx_config += zlib_config
+  if static:
+    zlib_lib = zlib.library
+  else:
+    zlib_lib = drake.copy(zlib.library, lib_path, strip_prefix = True)
+  cxx_config += zlib.config
   libarchive_lib = drake.copy(libarchive_lib, lib_path,
                               strip_prefix = True)
   if cxx_toolkit.os in [drake.os.macos, drake.os.ios]:

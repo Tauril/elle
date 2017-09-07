@@ -1,0 +1,93 @@
+import drake
+import os
+
+config = None
+library = None
+prefix = None
+
+with open(str(drake.path_source('../drake-utils.py')), 'r') as f:
+  exec(f.read(), globals(), globals())
+
+def configure(static, cxx_toolkit, cxx_config):
+
+  global config, library, prefix
+
+  windows = cxx_toolkit.os is drake.os.windows
+  prefix = drake.path_build()
+  zlib_version = '1.2.11'
+  zlib_basename = 'zlib-%s' % zlib_version
+  zlib_tarball = drake.node('%s.tar.gz' % zlib_basename)
+  zlib_build = drake.Path(zlib_basename)
+  zlib_configure = drake.node(zlib_build / 'configure')
+  # They don't always update their configure (which is not generated
+  # by Autoconf).  However, the zlib.h file is updated with the
+  # version number.
+  zlib_main_header = drake.node(zlib_build / 'zlib.h')
+  zlib_url = 'http://zlib.net/%s.tar.gz' % zlib_basename
+  drake.HTTPDownload(
+    zlib_url,
+    zlib_tarball,
+    fingerprint = '1c9f62f0778697a09d36121ead88e08e'
+  )
+  drake.TarballExtractor(
+    zlib_tarball,
+    targets = ['%s/%s' % (zlib_basename, 'configure'),
+               '%s/%s' % (zlib_basename, 'zlib.h'),
+               ],
+  )
+
+  zlib_env = {}
+  if windows:
+    # XXX only for mingw
+    zlib_makefile = 'win32/Makefile.gcc'
+    zlib_configure_call = None
+  else:
+    zlib_env['CC'] = cxx_toolkit.c
+    zlib_env['CFLAGS'] = '-fPIC -w'
+    zlib_makefile = None
+    zlib_configure_call = zlib_configure
+  zlib_configure_args = []
+  if static or cxx_toolkit.os is drake.os.windows:
+    zlib_configure_args.append('--static')
+    library = drake.cxx.StaticLib('lib/libz.a')
+  elif cxx_toolkit.os is drake.os.macos:
+    library = drake.cxx.DynLib('lib/libz.%s.dylib' % zlib_version)
+  elif cxx_toolkit.os in [drake.os.linux]:
+    library = drake.cxx.DynLib('lib/libz.so.1')
+  elif cxx_toolkit.os is drake.os.android:
+    library = drake.cxx.StaticLib('lib/libz.a')
+    zlib_configure_args.append('--static')
+  elif cxx_toolkit.os is drake.os.ios:
+    library = drake.cxx.StaticLib('lib/libz.a')
+    zlib_arch_str = ''
+    for arch in archs:
+      zlib_arch_str += '-arch %s ' % arch
+    zlib_env['CC'] += ' %s -mios-version-min=7.0' % (zlib_arch_str)
+    zlib_env['SDKROOT'] = os.environ['SDKROOT']
+    zlib_env['CFLAGS'] += ' -isysroot %s' % os.environ['SDKROOT']
+
+  zlib_prefix_absolute = drake.path_build(absolute = True)
+  zlib_args = [
+    "BINARY_PATH='%s/bin'" % zlib_prefix_absolute,
+    "INCLUDE_PATH='%s/include'" % zlib_prefix_absolute,
+    "LIBRARY_PATH='%s/lib'" % zlib_prefix_absolute,
+  ]
+  if windows:
+    zlib_args.append("PREFIX=%s" % cxx_toolkit.prefix)
+  GNUBuilder(
+    cxx_toolkit,
+    configure = zlib_configure_call,
+    configure_args = [
+      '--prefix=%s' % zlib_prefix_absolute,
+    ] + zlib_configure_args,
+    additional_env = zlib_env,
+    working_directory = drake.path_build(zlib_build),
+    targets = [library] + drake.nodes('include/zlib.h',
+                                      'include/zconf.h'),
+    makefile = zlib_makefile,
+    sources = [zlib_configure, zlib_main_header],
+    build_args = ['install'] + list(s.replace('\\', '/') for s in zlib_args)
+  )
+  config = drake.cxx.Config()
+  config.add_local_include_path('include')
+  drake.Rule('build') << library

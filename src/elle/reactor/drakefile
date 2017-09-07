@@ -31,8 +31,7 @@ with open(str(drake.path_source('../../../drake-utils.py')), 'r') as f:
 def configure(static,
               curl_config,
               curl_lib,
-              zlib_config,
-              zlib_lib,
+              zlib,
               cxx_toolkit,
               cxx_config,
               boost,
@@ -424,8 +423,10 @@ def configure(static,
                               lib_path, strip_prefix = True)
 
   # Zlib
-  local_cxx_config += zlib_config
-  zlib_lib = drake.copy(zlib_lib, lib_path, strip_prefix = True)
+  local_cxx_config += zlib.config
+  zlib_lib = zlib.library
+  if not static:
+    zlib_lib = drake.copy(zlib_lib, lib_path, strip_prefix = True)
 
   # Elle
   elle = elle or drake.include('../../../elle')
