@@ -11,7 +11,7 @@ from itertools import chain
 archs = None
 athena = None
 aws = None
-
+boost = None
 config = None
 cryptography = None
 curl_config = None
@@ -52,6 +52,10 @@ def set_valgrind(value):
 def set_cxx_toolkit(value):
   global cxx_toolkit
   cxx_toolkit = value
+
+def set_boost(value):
+  global boost
+  boost = value
 
 def configure(cxx_toolkit = None,
               cxx_toolkit_host = None,
@@ -756,6 +760,7 @@ def configure(cxx_toolkit = None,
                                 cxx_config = cxx_config,
                                 python3 = python3)
     boost = built_boost.boost
+  set_boost(boost)
 
   ## ------------- ##
   ##    LDAP       ##
