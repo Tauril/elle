@@ -341,8 +341,9 @@ using python : %(python_version)s : %(python_prefix)s/%(python_bin)s : %(python_
     targets = boost_libraries + headers)
   if windows and python3:
     python_version_tuple = \
-      (python3.prefix, python_version.major, python_version.minor)
-    python_dll = drake.node('%s/python%s%s.dll' % python_version_tuple)
+      (python3.prefix, python3.version.major, python3.version.minor)
+    python_dll = drake.node(
+      '%s/python%s%s.dll' % python_version_tuple)
     boost_fs = drake.node('lib/libboost_python3-mt-s.a')
     boost_fs.dependency_add(python_dll)
   boost = drake.cxx.boost.Boost(
