@@ -484,10 +484,8 @@ def configure(cxx_toolkit = None,
     curl_zlib_libs = drake.copy(curl_zlib_libs, curl_prefix / 'lib',
                                 strip_prefix = True)
   curl_configure_args = [
-    '--with-ssl=%s' % drake.path_build(curl_openssl_libs[0].path().dirname(),
-                                       absolute = True),
-    '--with-zlib=%s' % drake.path_build(curl_zlib_libs[0].path().dirname(),
-                                        absolute = True),
+    '--with-ssl=%s' % drake.path_build(openssl_prefix, absolute = True),
+    '--with-zlib=%s' % zlib.prefix_absolute,
     '--enable-hidden-symbols',
     '--enable-optimize',
     '--enable-warnings',
