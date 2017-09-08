@@ -44,7 +44,7 @@ def configure(static, cxx_toolkit, cxx_config, python3):
       'boostcpp.jam', # boost_build_osx.patch
     ]
     boost_patches += [
-      (drake.Node('.patches/boost_build_osx.patch'), 1),
+      (drake.Node('patches/boost_build_osx.patch'), 1),
     ]
   drake.TarballExtractor(
     boost_tarball,
@@ -357,3 +357,7 @@ using python : %(python_version)s : %(python_prefix)s/%(python_bin)s : %(python_
   build_rule = drake.Rule('build')
   build_rule << headers
   build_rule << boost_libraries
+
+# Local Variables:
+# mode: python
+# End:
