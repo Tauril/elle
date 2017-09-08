@@ -4,6 +4,7 @@ import os
 config = None
 library = None
 prefix = None
+prefix_absolute = None
 
 with open(str(drake.path_source('../drake-utils.py')), 'r') as f:
   exec(f.read(), globals(), globals())
@@ -66,11 +67,12 @@ def configure(static, cxx_toolkit, cxx_config):
     zlib_env['SDKROOT'] = os.environ['SDKROOT']
     zlib_env['CFLAGS'] += ' -isysroot %s' % os.environ['SDKROOT']
 
-  zlib_prefix_absolute = drake.path_build(absolute = True)
+  global prefix_absolute
+  prefix_absolute = drake.path_build(absolute = True)
   zlib_args = [
-    "BINARY_PATH='%s/bin'" % zlib_prefix_absolute,
-    "INCLUDE_PATH='%s/include'" % zlib_prefix_absolute,
-    "LIBRARY_PATH='%s/lib'" % zlib_prefix_absolute,
+    "BINARY_PATH='%s/bin'" % prefix_absolute,
+    "INCLUDE_PATH='%s/include'" % prefix_absolute,
+    "LIBRARY_PATH='%s/lib'" % prefix_absolute,
   ]
   if windows:
     zlib_args.append("PREFIX=%s" % cxx_toolkit.prefix)
@@ -78,7 +80,7 @@ def configure(static, cxx_toolkit, cxx_config):
     cxx_toolkit,
     configure = zlib_configure_call,
     configure_args = [
-      '--prefix=%s' % zlib_prefix_absolute,
+      '--prefix=%s' % prefix_absolute,
     ] + zlib_configure_args,
     additional_env = zlib_env,
     working_directory = drake.path_build(zlib_build),

@@ -484,9 +484,9 @@ def configure(cxx_toolkit = None,
     curl_zlib_libs = drake.copy(curl_zlib_libs, curl_prefix / 'lib',
                                 strip_prefix = True)
   curl_configure_args = [
-    '--with-ssl=%s' % drake.path_build(openssl_prefix,
+    '--with-ssl=%s' % drake.path_build(curl_openssl_libs[0].path().dirname(),
                                        absolute = True),
-    '--with-zlib=%s' % drake.path_build(zlib.prefix,
+    '--with-zlib=%s' % drake.path_build(curl_zlib_libs[0].path().dirname(),
                                         absolute = True),
     '--enable-hidden-symbols',
     '--enable-optimize',
@@ -526,7 +526,7 @@ def configure(cxx_toolkit = None,
     # Be sure to control pkg-config, otherwise, because curl's
     # configure.ac checks pkg-config *before* --with-zlib, we might
     # end up using the system's copy instead ours.
-    'PKG_CONFIG_PATH': str(drake.path_build(zlib.prefix, absolute = True) / 'lib' / 'pkgconfig'),
+    'PKG_CONFIG_PATH': str(zlib.prefix_absolute / 'lib' / 'pkgconfig'),
   }
   if static:
     curl_env.update({'LIBS': '-ldl'})
@@ -535,7 +535,7 @@ def configure(cxx_toolkit = None,
   else:
     curl_configure_args.append('--host=%s' % drake.host())
   if cxx_toolkit.os is drake.os.macos:
-    path = drake.path_build(zlib.prefix, absolute = True) / 'lib'
+    path = zlib.prefix_absolute / 'lib'
     curl_configure_args.append('DYLD_FALLBACK_LIBRARY_PATH=%s' % path)
   elif windows:
     curl_env['LIBS'] = '-lcrypt32 -lgdi32'
@@ -644,10 +644,9 @@ def configure(cxx_toolkit = None,
     '--disable-xattr',
     'CPPFLAGS=-I%s/include -I%s/include' % (
       openssl_prefix_absolute,
-      drake.path_build(zlib.prefix, absolute = True)),
+      zlib.prefix_absolute),
     'CFLAGS=-w', # No warnings.
-    'LDFLAGS=-L%s/lib -L%s/lib' % (openssl_prefix_absolute,
-                                   drake.path_build(zlib.prefix, absolute = True)),
+    'LDFLAGS=-L%s/lib -L%s/lib' % (openssl_prefix_absolute, zlib.prefix_absolute),
     '--without-bz2lib',
     '--without-expat',
     '--without-lzma',
