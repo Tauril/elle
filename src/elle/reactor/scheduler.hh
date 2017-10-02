@@ -183,6 +183,7 @@ namespace elle
       _terminate_now(Thread* thread,
                      bool suicide);
       ELLE_ATTRIBUTE(Thread*, current);
+      ELLE_ATTRIBUTE(Thread*, thrower_parent);
       ELLE_ATTRIBUTE(Threads, starting);
       ELLE_ATTRIBUTE(std::mutex, starting_mtx);
       ELLE_ATTRIBUTE(Threads, running);

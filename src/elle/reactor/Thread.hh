@@ -364,6 +364,7 @@ namespace elle
     private:
       friend class Scheduler;
       ELLE_ATTRIBUTE(Thread*, parent_thread);
+      ELLE_ATTRIBUTE(std::vector<Thread*>, children_threads);
       ELLE_ATTRIBUTE(std::unique_ptr<backend::Thread>, thread);
       ELLE_ATTRIBUTE(Scheduler&, scheduler);
       ELLE_ATTRIBUTE_R(bool, terminating);

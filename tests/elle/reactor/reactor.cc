@@ -3353,6 +3353,34 @@ namespace for_each
   }
 }
 
+namespace propagate_exception
+{
+  ELLE_TEST_SCHEDULED(child_propagate_exception1)
+  {
+    elle::reactor::Thread child(
+      elle::reactor::scheduler(), "child",
+      [] { throw BeaconException(); });
+    BOOST_CHECK_THROW(elle::reactor::wait(child), BeaconException);
+  }
+
+  ELLE_TEST_SCHEDULED(child_propagate_exception2)
+  {
+    elle::reactor::Thread child(
+      elle::reactor::scheduler(), "child",
+      [] { throw BeaconException(); });
+    BOOST_CHECK_THROW(elle::reactor::sleep(), BeaconException);
+  }
+
+  ELLE_TEST_SCHEDULED(child_propagate_exception3)
+  {
+    elle::reactor::Thread child(
+      elle::reactor::scheduler(), "child",
+      [] { throw BeaconException(); });
+    elle::reactor::Barrier b;
+    BOOST_CHECK_THROW(elle::reactor::wait({b, child}), BeaconException);
+  }
+}
+
 /*-----.
 | Main |
 `-----*/
@@ -3623,5 +3651,18 @@ ELLE_TEST_SUITE()
     s->add(BOOST_TEST_CASE(parallel));
     auto parallel_break = &for_each::parallel_break;
     s->add(BOOST_TEST_CASE(parallel_break));
+  }
+  {
+    boost::unit_test::test_suite* s = BOOST_TEST_SUITE("exception");
+    boost::unit_test::framework::master_test_suite().add(s);
+    auto child_propagate_exception1 =
+      &propagate_exception::child_propagate_exception1;
+    s->add(BOOST_TEST_CASE(child_propagate_exception1));
+    auto child_propagate_exception2 =
+      &propagate_exception::child_propagate_exception2;
+    s->add(BOOST_TEST_CASE(child_propagate_exception2));
+    auto child_propagate_exception3 =
+      &propagate_exception::child_propagate_exception3;
+    s->add(BOOST_TEST_CASE(child_propagate_exception3));
   }
 }

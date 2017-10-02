@@ -45,6 +45,9 @@ namespace elle
       , _terminating(false)
       , _interruptible(true)
     {
+      if (_parent_thread)
+        _parent_thread->_children_threads.emplace_back(this);
+
       _scheduler._thread_register(*this);
     }
 

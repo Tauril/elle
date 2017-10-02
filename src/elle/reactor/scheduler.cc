@@ -45,6 +45,7 @@ namespace elle
       : _done(false)
       , _shallstop(false)
       , _current(nullptr)
+      , _thrower_parent(nullptr)
       , _background_service_work(
            std::make_unique<boost::asio::io_service::work>(this->_background_service))
       , _background_pool()
@@ -336,6 +337,13 @@ namespace elle
       this->_current = thread;
       try
       {
+        if (this->_eptr)
+        {
+          // If not the parent that threw, try again.
+          if (thread != this->_thrower_parent)
+            return;
+          this->_rethrow_exception(this->_eptr);
+        }
         thread->_step();
         this->_current = previous;
       }
@@ -348,12 +356,36 @@ namespace elle
           thread, elle::exception_string());
         this->_current = previous;
         this->_eptr = std::current_exception();
-        this->terminate();
+
+        // Exception left an orphin thread; destroy everything left.
+        if (!thread->_parent_thread)
+          this->terminate();
+        else
+        {
+          for (auto& t : thread->_children_threads)
+            t->terminate();
+          thread->_children_threads.clear();
+          thread->terminate();
+          // Pass exception to the parent.
+          this->_thrower_parent = thread->_parent_thread;
+        }
       }
       if (thread->state() == Thread::State::done)
       {
         ELLE_TRACE("%s: %s finished", *this, *thread);
         this->_running.erase(thread);
+
+        if (thread->_parent_thread)
+        {
+          auto& siblings = thread->_parent_thread->_children_threads;
+          auto self = std::find(siblings.begin(), siblings.end(), thread);
+
+          if (self == siblings.end())
+            ELLE_ABORT("%s: can't be removed from its siblings' list", *thread);
+
+          siblings.erase(self);
+        }
+
         thread->_scheduler_release();
       }
     }
